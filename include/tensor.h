@@ -37,12 +37,11 @@ namespace plearn {
 
 			using tarray = array<tdata_t, shape.size()>;
 
-			Tensor() :
-				data_(std::make_shared<tarray>()) {}
+			Tensor() {}
+			Tensor(__Shape) {}
 
 
 		private:
-			std::shared_ptr<tarray> data_;
 	};
 
 
