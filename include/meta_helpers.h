@@ -42,4 +42,26 @@ namespace plearn {
 		constexpr auto allButLast(IntSeq<last...> lastSeq) {
 			return allButLast(IntSeq<>{}, lastSeq);
 		}
+
+
+	template<typename... T>
+		struct GenericSeq{
+		};
+
+	template<typename... vals1, typename... vals2>
+		GenericSeq<vals1..., vals2...> pack() { return {}; }
+	
+	template<typename... vals1, typename T>
+		GenericSeq<vals1..., T> pack(
+				GenericSeq<vals1...>, T) {
+			return {};
+		}
+
+	template<typename... vals1, typename... vals2>
+		GenericSeq<vals1..., vals2...> pack(
+				GenericSeq<vals1...>, GenericSeq<vals2...>) {
+			return {};
+		}
+
+
 }
