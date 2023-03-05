@@ -1,0 +1,21 @@
+[requires]
+boost/1.80.0
+#cppflow/2.0.0
+#csv-parser/2.1.3
+spdlog/[>=1.4.1]
+#concurrentqueue/1.0.3
+fmt/9.1.0
+#onetbb/2021.7.0
+#yaml-cpp/0.7.0
+
+#specify this for conflict resolution
+zlib/1.2.13
+
+gtest/cci.20210126
+
+#eigen/3.4.0
+armadillo/11.4.3
+
+[generators]
+cmake
+
