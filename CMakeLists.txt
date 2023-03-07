@@ -38,6 +38,8 @@ if (PLEARN_TEST)
 	add_executable(unit_test 
 		test/basic_test.cpp
 		test/layer_test.cpp
+		test/call_graph_test.cpp
+		test/executor_test.cpp
 		)
 	target_link_libraries(unit_test PRIVATE CONAN_PKG::gtest plearn_core)
 	gtest_discover_tests(unit_test)
