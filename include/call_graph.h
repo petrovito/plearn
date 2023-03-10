@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <operation.h>
+#include <unordered_map>
 #include <vector>
 
 namespace plearn {
@@ -31,50 +32,52 @@ namespace plearn {
 
 
 
+	using node_id = int;
+
 	struct op_node;
 
 	struct tensor_node {
+		node_id id_;
 		tensor* tensor_;
-
-		/* vector<op_node*> inputs; */
-		/* vector<op_node*> outputs; */
 	};
 
 	struct placeholder_node {
+		node_id id_;
 		shape shape_;
-		vector<op_node*> outputs_;
+		vector<node_id> outputs_;
 	};
 
 	struct op_node {
+		node_id id_;
 		operation op_;
 
-		vector<tensor_node*> ints_;
-		vector<placeholder_node*> deps_;
-		/* vector<tensor_node*> out_; */
-		placeholder_node* out_;
+		vector<node_id> ints_;
+		vector<node_id> deps_;
+		node_id out_;
 	};
 
 
-			/* op_node& push_op_node(auto in_nodes, operation op) { */
-			/* 	op_nodes_.push_back({.op_=op, .ins_=in_nodes}); */
-			/* 	return op_nodes_.back(); */
-			/* } */
-
-			/* call_graph() {} */
-
-		/* private: */
+	template<typename K, typename V>
+	using hash_map = std::unordered_map<K, V>;
 
 	class call_graph {
 
 		public:
 
-			vector<placeholder_node> in_nodes_;
-			vector<placeholder_node> int_nodes_;
-			vector<placeholder_node> out_nodes_;
-			vector<tensor_node> data_nodes_;
-			vector<op_node> op_nodes_;
+			hash_map<node_id, placeholder_node> flow_nodes_;
+			hash_map<node_id, tensor_node> data_nodes_;
+			hash_map<node_id, op_node> op_nodes_;
+
+			vector<node_id> in_nodes_;
+			vector<node_id> out_nodes_;
 
 			
+
+	};
+	
+	class node_graph_builder {
+
+		call_graph build() { return {}; }
 
 	};
 
