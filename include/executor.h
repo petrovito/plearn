@@ -14,8 +14,14 @@ namespace plearn {
 
 	class exec_env {};
 
-	/* template<typename T> */
-	/* using owned_ptr = T*; */
+	template<typename T>
+	using read_ptr = const T*;
+
+	template<typename T>
+	using borrowed_ptr = T*;
+
+	template<typename T>
+	using owned_ptr = T*;
 
 
 	class Executor {
@@ -33,23 +39,32 @@ namespace plearn {
 		~tensor_buf() { delete [] buf; }
 	};
 
+	using std::shared_ptr;
+
 	class cpu_tensor {
 		public:
-			tensor meta_data_;
-			std::shared_ptr<tensor_buf> content_;
-
-			cpu_tensor(const shape& shape) : meta_data_(shape) {
-				std::size_t size = 1;
-				for (auto dim : shape.dims) {
-					size *= dim;
-				}
-				content_ = std::make_shared<tensor_buf>(size);
-			}
-
-			tensor_buf* get_content() const {
+			cpu_tensor() = default;
+			cpu_tensor(const tensor& tens, const shared_ptr<tensor_buf>& buf) :
+				meta_data_{tens}, content_{buf} {}
+			borrowed_ptr<tensor_buf> get_content() const {
 				return content_.get();
 			}
+
+		private:
+			tensor meta_data_;
+			shared_ptr<tensor_buf> content_;
+
+		friend class cpu_tensor_factory;
 	};
+
+
+	class cpu_tensor_factory {
+		public:
+			owned_ptr<cpu_tensor> allocate(const tensor& tens) const {
+				auto buf = std::make_shared<tensor_buf>(tens.shape_.size());
+				return new cpu_tensor(tens, buf);
+			}
+	} constexpr cpu_tensor_fac;
 
 	struct cpu_op_node;
 
@@ -59,12 +74,6 @@ namespace plearn {
 		cpu_tensor* tensor_;
 		vector<cpu_op_node*> outputs_;
 	};
-
-	/* struct cpu_placeholder_node { */
-	/* 	node_id id_; */
-	/* 	shape shape_; */
-	/* 	vector<op_node*> outputs_; */
-	/* }; */
 
 
 	struct cpu_op_node {
@@ -81,6 +90,9 @@ namespace plearn {
 		hash_map<node_id, cpu_op_node> op_nodes_;
 
 		vector<cpu_tensor_node*> in_nodes_;
+
+		//owned tensors
+		vector<unique_ptr<cpu_tensor>> tensors_;
 	};
 	
 
@@ -113,13 +125,29 @@ namespace plearn {
 						cpu_tensor_node.outputs_.push_back(&cpu_op_node);
 					}
 				}
+
+				for (auto in_node_id: graph.in_nodes_) {
+					auto& in_node = env_->tensor_nodes_[in_node_id];
+					env_->in_nodes_.push_back(&in_node);
+				}
+				//TODO outnodes?
 			}
 
 			cpu_exec_env_builder& alloc_flow_mem() {
+				for (auto flown_id: flow_nodes_) {
+					auto& flow_n = env_->tensor_nodes_[flown_id];
+					tensor tens(flow_n.shape_);
+					auto cpu_tens = cpu_tensor_fac.allocate(tens);
+					env_->tensors_.push_back(unique_ptr<cpu_tensor>(cpu_tens));
+					flow_n.tensor_ = cpu_tens;
+				} 
 				return *this;
 			}
 
-			cpu_exec_env_builder& load_data_nodes() {
+			cpu_exec_env_builder& load_data_nodes(hash_map<node_id, borrowed_ptr<cpu_tensor>> cpu_tensors) {
+				for (auto& [n_id, cpu_tens]: cpu_tensors) {
+					env_->tensor_nodes_[n_id].tensor_ = cpu_tens;
+				}
 				return *this;
 			}
 

@@ -12,12 +12,19 @@ namespace plearn {
 	struct shape {
 		int rank;
 		vector<std::uint64_t> dims;
+		int size() const {
+			std::size_t size = 1;
+			for (auto dim : dims) {
+				size *= dim;
+			}
+			return size;
+		}
 	};
 
 	class tensor {
 		public:
 			tensor() = default;
-			tensor(shape s) : shape_{s} {}
+			tensor(const shape& s) : shape_{s} {}
 			shape shape_;
 
 	};
