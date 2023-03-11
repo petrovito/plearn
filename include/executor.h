@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <operation.h>
@@ -50,11 +51,13 @@ namespace plearn {
 			}
 	};
 
-	struct op_node;
+	struct cpu_op_node;
 
 	struct cpu_tensor_node {
 		node_id id_;
+		shape shape_;
 		cpu_tensor* tensor_;
+		vector<cpu_op_node*> outputs_;
 	};
 
 	/* struct cpu_placeholder_node { */
@@ -68,39 +71,72 @@ namespace plearn {
 		node_id id_;
 		operation op_;
 
-		vector<cpu_tensor_node*> ints_;
+		vector<cpu_tensor_node*> deps_;
 		int unready_deps_;
 		cpu_tensor_node* out_;
 	};
 
 	struct cpu_exec_env {
-		/* hash_map<node_id, cpu_placeholder_node> in_nodes_; */
-		/* hash_map<node_id, cpu_tensor_node> int_nodes_; */
 		hash_map<node_id, cpu_tensor_node> tensor_nodes_;
 		hash_map<node_id, cpu_op_node> op_nodes_;
 
 		vector<cpu_tensor_node*> in_nodes_;
 	};
+	
+
+	class cpu_exec_env_builder {
+
+		public:
+			cpu_exec_env_builder(const call_graph& graph) :
+				env_{std::make_unique<cpu_exec_env>()}
+			{
+				//create nodes
+				for (auto& [id, node]: graph.flow_nodes_) {
+					env_->tensor_nodes_.insert({id, {.id_=id, .shape_=node.shape_}});
+					flow_nodes_.push_back(id);
+				}
+				for (auto& [id, node]: graph.data_nodes_) {
+					env_->tensor_nodes_.insert(
+							{id, {.id_=id, .shape_=node.tensor_->shape_}});
+					data_nodes_.push_back(id);
+				}
+				for (auto& [id, node]: graph.op_nodes_) {
+					env_->op_nodes_.insert({id, {.id_=id}});
+				}
+
+				//wiring
+				for (auto& [opn_id, op_node]: graph.op_nodes_) {
+					auto& cpu_op_node = env_->op_nodes_[opn_id];
+					for (auto tensorn_id: op_node.inputs_) {
+						auto& cpu_tensor_node = env_->tensor_nodes_[tensorn_id];
+						cpu_op_node.deps_.push_back(&cpu_tensor_node);
+						cpu_tensor_node.outputs_.push_back(&cpu_op_node);
+					}
+				}
+			}
+
+			cpu_exec_env_builder& alloc_flow_mem() {
+				return *this;
+			}
+
+			cpu_exec_env_builder& load_data_nodes() {
+				return *this;
+			}
+
+			unique_ptr<cpu_exec_env> build() { return std::move(env_); }
+
+		private:
+			unique_ptr<cpu_exec_env> env_;
+			vector<node_id> flow_nodes_,
+							data_nodes_,
+							in_nodes_,
+							out_nodes_;
+	}; 
 
 
 	class CpuExecutor {
 
 		unique_ptr<cpu_exec_env> create_env(call_graph& graph) {
-			auto env = new cpu_exec_env{};
-			//create nodes
-			for (auto& [id, node]: graph.flow_nodes_) {
-				env->tensor_nodes_.insert({id, {.id_=id}});
-				//TODO allocate memory
-			}
-			for (auto& [id, node]: graph.data_nodes_) {
-				env->tensor_nodes_.insert({id, {.id_=id}});
-				//TODO load tensor into memory... how?
-			}
-			for (auto& [id, node]: graph.op_nodes_) {
-				env->op_nodes_.insert({id, {.id_=id}});
-			}
-			//TODO wiring
-			return unique_ptr<cpu_exec_env>(env);
 		}
 		
 		vector<tensor> execute(vector<tensor> input, exec_env&) {

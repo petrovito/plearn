@@ -38,21 +38,16 @@ namespace plearn {
 
 	struct tensor_node {
 		node_id id_;
-		tensor* tensor_;
-	};
-
-	struct placeholder_node {
-		node_id id_;
 		shape shape_;
 		vector<node_id> outputs_;
+		tensor* tensor_;
 	};
 
 	struct op_node {
 		node_id id_;
 		operation op_;
 
-		vector<node_id> ints_;
-		vector<node_id> deps_;
+		vector<node_id> inputs_;
 		node_id out_;
 	};
 
@@ -61,18 +56,13 @@ namespace plearn {
 	using hash_map = std::unordered_map<K, V>;
 
 	class call_graph {
-
 		public:
-
-			hash_map<node_id, placeholder_node> flow_nodes_;
+			hash_map<node_id, tensor_node> flow_nodes_;
 			hash_map<node_id, tensor_node> data_nodes_;
 			hash_map<node_id, op_node> op_nodes_;
 
 			vector<node_id> in_nodes_;
 			vector<node_id> out_nodes_;
-
-			
-
 	};
 	
 	class node_graph_builder {
