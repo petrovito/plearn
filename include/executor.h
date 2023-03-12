@@ -6,95 +6,11 @@
 #include <operation.h>
 #include <vector>
 
+#include <cpu_types.h>
+#include <cpu_ops.h>
 #include <call_graph.h>
 
 namespace plearn {
-
-	using std::unique_ptr;
-
-	class exec_env {};
-
-	template<typename T>
-	using read_ptr = const T*;
-
-	template<typename T>
-	using borrowed_ptr = T*;
-
-	template<typename T>
-	using owned_ptr = T*;
-
-
-	class Executor {
-		virtual unique_ptr<exec_env> create_env(call_graph&) = 0;
-		virtual vector<tensor> execute(vector<tensor> input, exec_env&) = 0;
-	};
-
-
-	struct tensor_buf {
-		float* buf;
-		uint64_t size;
-
-		tensor_buf(uint64_t size) : size(size),
-			buf{new (std::align_val_t(64)) float[size]{}} { }
-		~tensor_buf() { delete [] buf; }
-	};
-
-	using std::shared_ptr;
-
-	class cpu_tensor {
-		public:
-			cpu_tensor() = default;
-			cpu_tensor(const tensor& tens, const shared_ptr<tensor_buf>& buf) :
-				meta_data_{tens}, content_{buf} {}
-			borrowed_ptr<tensor_buf> get_content() const {
-				return content_.get();
-			}
-
-		private:
-			tensor meta_data_;
-			shared_ptr<tensor_buf> content_;
-
-		friend class cpu_tensor_factory;
-	};
-
-
-	class cpu_tensor_factory {
-		public:
-			owned_ptr<cpu_tensor> allocate(const tensor& tens) const {
-				auto buf = std::make_shared<tensor_buf>(tens.shape_.size());
-				return new cpu_tensor(tens, buf);
-			}
-	} constexpr cpu_tensor_fac;
-
-	struct cpu_op_node;
-
-	struct cpu_tensor_node {
-		node_id id_;
-		shape shape_;
-		cpu_tensor* tensor_;
-		vector<cpu_op_node*> outputs_;
-	};
-
-
-	struct cpu_op_node {
-		node_id id_;
-		operation op_;
-
-		vector<cpu_tensor_node*> deps_;
-		int unready_deps_;
-		cpu_tensor_node* out_;
-	};
-
-	struct cpu_exec_env {
-		hash_map<node_id, cpu_tensor_node> tensor_nodes_;
-		hash_map<node_id, cpu_op_node> op_nodes_;
-
-		vector<cpu_tensor_node*> in_nodes_;
-
-		//owned tensors
-		vector<unique_ptr<cpu_tensor>> tensors_;
-	};
-	
 
 	class cpu_exec_env_builder {
 
@@ -137,14 +53,14 @@ namespace plearn {
 				for (auto flown_id: flow_nodes_) {
 					auto& flow_n = env_->tensor_nodes_[flown_id];
 					tensor tens(flow_n.shape_);
-					auto cpu_tens = cpu_tensor_fac.allocate(tens);
-					env_->tensors_.push_back(unique_ptr<cpu_tensor>(cpu_tens));
+					auto cpu_tens = cpu_tensor_factory::allocate(tens);
+					env_->tensors_.push_back(cpu_tens);
 					flow_n.tensor_ = cpu_tens;
 				} 
 				return *this;
 			}
 
-			cpu_exec_env_builder& load_data_nodes(hash_map<node_id, borrowed_ptr<cpu_tensor>> cpu_tensors) {
+			cpu_exec_env_builder& load_data_nodes(hash_map<node_id, cpu_tensor> cpu_tensors) {
 				for (auto& [n_id, cpu_tens]: cpu_tensors) {
 					env_->tensor_nodes_[n_id].tensor_ = cpu_tens;
 				}
@@ -164,10 +80,22 @@ namespace plearn {
 
 	class CpuExecutor {
 
-		unique_ptr<cpu_exec_env> create_env(call_graph& graph) {
+		static unique_ptr<cpu_exec_env> create_env(call_graph& graph) {
 		}
 		
-		vector<tensor> execute(vector<tensor> input, exec_env&) {
+		static vector<tensor> execute(vector<tensor> input, exec_env&) {
+		}
+
+		static void execute_op(operation op, vector<cpu_tensor> inputs, cpu_tensor& output) {
+			switch (op.type_) {
+				case op_type::matmul:
+					cpu_matmul(op, inputs, output);
+				case op_type::matvecmul:
+					cpu_matvecmul(op, inputs, output);
+				case op_type::add:
+					cpu_add(op, inputs, output);
+			}
+
 		}
 
 	};

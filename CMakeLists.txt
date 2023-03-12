@@ -9,6 +9,7 @@ cmake_policy(SET CMP0069 NEW)
 include(CheckIPOSupported)
 check_ipo_supported()
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
 
 
 if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE EQUAL "Debug")
@@ -40,6 +41,7 @@ if (PLEARN_TEST)
 		test/layer_test.cpp
 		test/call_graph_test.cpp
 		test/executor_test.cpp
+		test/cpu_ops_test.cpp
 		)
 	target_link_libraries(unit_test PRIVATE CONAN_PKG::gtest plearn_core)
 	# gtest_discover_tests(unit_test)

@@ -12,7 +12,7 @@ namespace plearn {
 	struct shape {
 		int rank;
 		vector<std::uint64_t> dims;
-		int size() const {
+		uint64_t size() const {
 			std::size_t size = 1;
 			for (auto dim : dims) {
 				size *= dim;
@@ -29,8 +29,14 @@ namespace plearn {
 
 	};
 
-	struct operation {
+	enum class op_type {
+		matmul,
+		matvecmul,
+		add,
+	};
 
+	struct operation {
+		op_type type_;
 	};
 
 	struct matmul : public operation {
