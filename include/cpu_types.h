@@ -1,10 +1,14 @@
 #pragma once
 
 #include <algorithm>
+#include <bits/ranges_util.h>
 #include <call_graph.h>
 #include <cassert>
 #include <cstdint>
 #include <unordered_set>
+#include <ranges>
+#include <queue>
+#include <vector>
 
 namespace plearn {
 
@@ -75,15 +79,33 @@ namespace plearn {
 		}
 	};
 
+	using std::ranges::find_if;
+
 
 	struct cpu_op_node {
+		struct dep {
+			cpu_tensor_node* ten_node_;
+			node_id id_;
+			bool is_ready_;
+			bool is_flow_node_;
+		};
+
 		node_id id_;
 		operation op_;
 
-		vector<cpu_tensor_node*> deps_;
+		vector<dep> deps_;
 		int unready_deps_;
 		int flow_dep_count_;
 		cpu_tensor_node* out_;
+
+		//returns true IFF this op_node just become ready as a result of this dep
+		bool dep_ready(node_id id) {
+			auto dep = find_if(deps_, [id](auto& dep) {return id == dep.id_;});
+			if (dep == deps_.end() && dep->is_ready_) return false;
+			//not ready yet
+			dep->is_ready_ = true;
+			return unready_deps_ == 0;
+		}
 	};
 
 	enum class env_state {
@@ -91,44 +113,91 @@ namespace plearn {
 		READY,
 	};
 
+	using std::queue;
+	using std::unordered_set;
+
 	class cpu_exec_env {
 		public:
 			/** 
 			 *  Zeros out flow tensors, and resets dependency counters.
 			 *  Sets input nodes of the call graph.
 			 * */
-			auto reset(const vector<cpu_tensor>& input) {
+			void reset(const vector<cpu_tensor>& input) {
 				assert(state_ == env_state::READY);
 				assert(input.size() == in_nodes_.size());
 				state_ = env_state::IN_PROGRESS;
+				unready_out_tens_ = out_nodes_.size();
 				//zero flow tensors
 				for (auto flown: flow_nodes_) {
 					flown->tensor_.zero();
 				}
-				//reset dependency counters
+				//reset dependency counters and readiness for flow nodes
 				for (auto& [id, opn]: op_nodes_) {
 					opn.unready_deps_ = opn.flow_dep_count_;
+					for (auto dep: opn.deps_) {
+						if (dep.is_flow_node_) dep.is_ready_ = false;
+					}
 				}
-				std::unordered_set<cpu_op_node*> ops_in_sight;
 				//set inputs
 				for (uint64_t i = 0; i < input.size(); i++) {
 					in_nodes_[i]->set_cpu_tensor(input[i]);
 					for (auto opn: in_nodes_[i]->outputs_) {
-						ops_in_sight.emplace(opn);
+						set_dep_ready(opn, in_nodes_[i]);
 					}
 				}
-				return ops_in_sight;
 			}
+
+			cpu_op_node* pop_ready_op() {
+				assert(!ready_q_.empty());
+				auto front = ready_q_.front();
+				ready_q_.pop();
+				return front;
+			}
+
+			void flow_node_ready(cpu_tensor_node* flown) {
+				for (auto opn: flown->outputs_) {
+					set_dep_ready(opn, flown);
+				}
+				if (std::ranges::count(out_nodes_, flown) > 0) {
+					unready_out_tens_--;
+					if (unready_out_tens_ == 0) {
+						state_ = env_state::READY;
+					}
+				}
+			}
+
+			vector<cpu_tensor> output_tensors() {
+				assert(state_==env_state::READY);
+				vector<cpu_tensor> outputs;
+				std::transform(out_nodes_.begin(), out_nodes_.end(), outputs.begin(),
+						[] (auto outn) { return outn->tensor_; });
+				return outputs;
+			}
+
 
 			env_state state() const { return state_; }
 
 		private:
+			//returns true IFF op_node just become ready as a result of this dep
+			bool set_dep_ready(cpu_op_node* opn, const cpu_tensor_node* inn) {
+				if (opn->dep_ready(inn->id_)) {
+					ready_q_.push(opn);
+					return true;
+				} 
+				return false;
+			}
+
+
 			env_state state_;
+			queue<cpu_op_node*> ready_q_;
+			int unready_out_tens_;
+			
 
 			hash_map<node_id, cpu_tensor_node> tensor_nodes_;
 			hash_map<node_id, cpu_op_node> op_nodes_;
 
 			vector<cpu_tensor_node*> in_nodes_;
+			vector<cpu_tensor_node*> out_nodes_;
 			vector<cpu_tensor_node*> flow_nodes_;
 
 			//owned tensors

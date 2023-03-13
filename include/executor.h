@@ -1,9 +1,11 @@
 #pragma once
 
 #include <algorithm>
+#include <bits/ranges_algo.h>
 #include <cstdint>
 #include <memory>
 #include <operation.h>
+#include <ranges>
 #include <vector>
 
 #include <cpu_types.h>
@@ -36,8 +38,11 @@ namespace plearn {
 				for (auto& [opn_id, op_node]: graph.op_nodes_) {
 					auto& cpu_op_node = env_->op_nodes_[opn_id];
 					for (auto tensorn_id: op_node.inputs_) {
+						bool is_flow_node = graph.flow_nodes_.contains(tensorn_id);
 						auto& cpu_tensor_node = env_->tensor_nodes_[tensorn_id];
-						cpu_op_node.deps_.push_back(&cpu_tensor_node);
+						cpu_op_node.deps_.push_back({
+								.ten_node_=&cpu_tensor_node, .id_=cpu_tensor_node.id_, 
+								.is_ready_=true, .is_flow_node_=is_flow_node});
 						cpu_tensor_node.outputs_.push_back(&cpu_op_node);
 					}
 				}
@@ -84,12 +89,16 @@ namespace plearn {
 		}
 		
 		static vector<cpu_tensor> execute(const vector<cpu_tensor>& input, cpu_exec_env& env) {
-			auto x = env.reset(input);
+			env.reset(input);
 			while (env.state() == env_state::IN_PROGRESS) {
-				//TODO propagate...
+				auto opn = env.pop_ready_op();
+				vector<cpu_tensor> input_tens(opn->deps_.size());
+				std::transform(opn->deps_.begin(), opn->deps_.end(), input_tens.begin(),
+						[](auto dep) {return dep.ten_node_->tensor_;});
+				execute_op(opn->op_, input_tens, opn->out_->tensor_);
+				env.flow_node_ready(opn->out_);
 			}
-			//TODO
-			return {};
+			return env.output_tensors();
 		}
 
 		static void execute_op(operation op, vector<cpu_tensor> inputs, cpu_tensor& output) {
