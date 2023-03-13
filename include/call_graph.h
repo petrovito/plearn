@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <operation.h>
 #include <unordered_map>
 #include <vector>
@@ -12,6 +14,7 @@ namespace plearn {
 	struct shape {
 		int rank;
 		vector<std::uint64_t> dims;
+
 		uint64_t size() const {
 			std::size_t size = 1;
 			for (auto dim : dims) {
@@ -19,6 +22,7 @@ namespace plearn {
 			}
 			return size;
 		}
+		bool operator==(const shape& s) { return rank == s.rank && dims == s.dims; }
 	};
 
 	class tensor {
@@ -62,6 +66,14 @@ namespace plearn {
 
 		vector<node_id> inputs_;
 		node_id out_;
+	};
+	
+	using std::hash;
+
+	struct op_node_hasher {
+		size_t operator()(const op_node& opn) {
+			return hash<node_id>()(opn.id_);
+		}
 	};
 
 

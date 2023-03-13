@@ -83,7 +83,13 @@ namespace plearn {
 		static unique_ptr<cpu_exec_env> create_env(call_graph& graph) {
 		}
 		
-		static vector<tensor> execute(vector<tensor> input, exec_env&) {
+		static vector<cpu_tensor> execute(const vector<cpu_tensor>& input, cpu_exec_env& env) {
+			auto x = env.reset(input);
+			while (env.state() == env_state::IN_PROGRESS) {
+				//TODO propagate...
+			}
+			//TODO
+			return {};
 		}
 
 		static void execute_op(operation op, vector<cpu_tensor> inputs, cpu_tensor& output) {
