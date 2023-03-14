@@ -27,16 +27,19 @@ namespace plearn {
 		}
 		shape() = default;
 
-		template<typename IntType, template <typename> class coll>
-		shape(auto rank, const coll<IntType>& _dims) : 
-			rank{rank}, dims{} {
-				std::copy(_dims.begin(), _dims.end(), dims.begin());
-			}
+		/* template<typename IntType, template <typename> class coll> */
+		/* shape(const coll<IntType>& _dims) : */ 
+		/* 	rank{_dims.size()}, dims{} { */
+		/* 		std::copy(_dims.begin(), _dims.end(), dims.begin()); */
+		/* 	} */
+
+		shape(vector<uint64_t> _dims) : 
+			rank{_dims.size()}, dims{_dims} {}
 
 		shape(std::integral auto...dims) : 
 			rank{sizeof...(dims)}, dims{dims...} {}
 
-		bool operator==(const shape& s) const { return rank == s.rank && dims == s.dims; }
+		friend auto operator<=>(const shape&, const shape&) = default;
 	};
 
 	class tensor {
@@ -56,6 +59,8 @@ namespace plearn {
 
 	struct operation {
 		op_type type_;
+		
+		friend auto operator<=>(const operation&, const operation&) = default;
 	};
 
 	struct noop : public operation {
@@ -74,6 +79,8 @@ namespace plearn {
 		node_id id_;
 		shape shape_;
 		vector<node_id> outputs_{};
+
+		friend auto operator<=>(const tensor_node&, const tensor_node&) = default;
 	};
 
 	struct op_node {
@@ -82,6 +89,8 @@ namespace plearn {
 
 		vector<node_id> inputs_;
 		node_id out_{};
+
+		friend auto operator<=>(const op_node&, const op_node&) = default;
 	};
 
 
@@ -96,6 +105,8 @@ namespace plearn {
 
 			vector<node_id> in_nodes_;
 			vector<node_id> out_nodes_;
+
+			friend bool operator==(const call_graph& a, const call_graph& b) = default;	
 	};
 
 	class call_graph_builder {

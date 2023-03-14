@@ -15,6 +15,7 @@ TEST(CpuOpTest, Matmul) {
 	auto c = new (std::align_val_t(32)) float[SIZE];
 	std::fill_n(a, SIZE, 1);
 	std::fill_n(b, SIZE, 1);
+	std::fill_n(c, SIZE, 0);
 
 	_cpu_matmul(a, b, c, dim, dim, dim);
 	for (int i = 0; i < dim; i++)
@@ -29,6 +30,7 @@ TEST(CpuOpTest, MatVecMul) {
 	auto c = new (std::align_val_t(32)) float[dim];
 	std::fill_n(a, SIZE, 1);
 	std::fill_n(b, dim, 1);
+	std::fill_n(c, dim, 0);
 
 	_cpu_matvecmul(a, b, c, dim, dim);
 	for (int i = 0; i < dim; i++)
@@ -41,6 +43,7 @@ TEST(CpuOpTest, Add) {
 	auto c = new (std::align_val_t(32)) float[SIZE];
 	std::fill_n(a, SIZE, 1);
 	std::fill_n(b, SIZE, 2);
+	std::fill_n(c, SIZE, 0);
 
 	_cpu_add(a, b, c, SIZE);
 	for (int i = 0; i < dim; i++)
@@ -54,6 +57,7 @@ TEST(CpuOpTest, MatmulAvx) {
 	auto c = new (std::align_val_t(32)) float[SIZE];
 	std::fill_n(a, SIZE, 1);
 	std::fill_n(b, SIZE, 1);
+	std::fill_n(c, SIZE, 0);
 
 	_cpu_matmul_avx(a, b, c, dim, dim, dim);
 	for (int i = 0; i < dim; i++)

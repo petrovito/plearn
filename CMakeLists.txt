@@ -26,13 +26,16 @@ execute_process(COMMAND conan install ${CONAN_DEP_PATH}
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-
-add_library(plearn_core STATIC
+add_library(plearn_msg STATIC
 	include/gen/call_graph.pb.cc
 	)
+target_link_libraries(plearn_msg PUBLIC CONAN_PKG::protobuf)
+
+add_library(plearn_core INTERFACE)
 target_include_directories(plearn_core INTERFACE include)
 target_link_libraries(plearn_core INTERFACE
 	${CONAN_LIBS}
+	plearn_msg
 	)
 
 if (PLEARN_TEST)

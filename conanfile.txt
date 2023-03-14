@@ -11,6 +11,8 @@ fmt/9.1.0
 #specify this for conflict resolution
 zlib/1.2.13
 
+protobuf/3.12.4
+
 gtest/cci.20210126
 
 #eigen/3.4.0
