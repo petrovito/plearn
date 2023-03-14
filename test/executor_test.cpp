@@ -63,7 +63,7 @@ TEST(CpuExecutor, ExecEnvBuilder) {
 
 
 
-TEST(CpuExecutor, Execute) {
+TEST(CpuExecutor, ExecEnvExecute) {
 	
 	call_graph_builder cg_builder;
 	auto inn_id = cg_builder.add_input_node(shape{768});
@@ -109,6 +109,27 @@ TEST(CpuExecutor, Execute) {
 	auto output = env->output_tensors();
 	ASSERT_EQ(output.size(), 1);
 	ASSERT_EQ(output[0].meta_data().shape_, shape{10});
+}
+
+TEST(CpuExecutor, Execute) {
+	auto cg = call_graph_example();
+	cpu_exec_env_builder builder(cg);
+
+	hash_map<node_id, cpu_tensor> data_tensors;
+	for (auto& [id, node]: cg.data_nodes_) {
+		data_tensors[id] = cpu_tensor_factory::allocate(node.shape_);
+	}
+
+	auto env = builder .alloc_flow_mem()
+		.load_data_nodes(data_tensors)
+		.build();
+
+	cpu_tensor in_tensor = cpu_tensor_factory::allocate(shape{768});
+	auto out_tensors = CpuExecutor::execute({in_tensor}, *env);
+
+	ASSERT_EQ(out_tensors.size(), 1);
+	ASSERT_EQ(out_tensors[0].meta_data().shape_, shape{10});
+
 }
 
 }

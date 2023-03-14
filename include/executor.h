@@ -95,6 +95,7 @@ namespace plearn {
 
 
 	class CpuExecutor {
+		public:
 
 		static unique_ptr<cpu_exec_env> create_env(call_graph& graph) {
 			return {};

@@ -202,7 +202,7 @@ namespace plearn {
 
 		friend class cpu_exec_env_builder;
 		friend class CpuExecutor_ExecEnvBuilder_Test;
-		friend class CpuExecutor_Execute_Test;
+		friend class CpuExecutor_ExecEnvExecute_Test;
 	};
 	
 }
