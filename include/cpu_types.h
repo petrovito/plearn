@@ -168,7 +168,7 @@ namespace plearn {
 
 			vector<cpu_tensor> output_tensors() {
 				assert(state_==env_state::READY);
-				vector<cpu_tensor> outputs;
+				vector<cpu_tensor> outputs(out_nodes_.size());
 				std::transform(out_nodes_.begin(), out_nodes_.end(), outputs.begin(),
 						[] (auto outn) { return outn->tensor_; });
 				return outputs;
@@ -202,6 +202,7 @@ namespace plearn {
 
 		friend class cpu_exec_env_builder;
 		friend class CpuExecutor_ExecEnvBuilder_Test;
+		friend class CpuExecutor_Execute_Test;
 	};
 	
 }

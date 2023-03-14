@@ -29,7 +29,7 @@ namespace plearn {
 		shape(std::integral auto...dims) : 
 			rank{sizeof...(dims)}, dims{dims...} {}
 
-		bool operator==(const shape& s) { return rank == s.rank && dims == s.dims; }
+		bool operator==(const shape& s) const { return rank == s.rank && dims == s.dims; }
 	};
 
 	class tensor {
@@ -41,6 +41,7 @@ namespace plearn {
 	};
 
 	enum class op_type {
+		noop,
 		matmul,
 		matvecmul,
 		add,
@@ -50,8 +51,12 @@ namespace plearn {
 		op_type type_;
 	};
 
-	struct matmul : public operation {
+	struct noop : public operation {
+		noop() : operation{op_type::noop} { }
+	};
 
+	struct matmul : public operation {
+		matmul() : operation{op_type::matmul} {}
 	};
 
 

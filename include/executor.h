@@ -80,7 +80,10 @@ namespace plearn {
 				return *this;
 			}
 
-			unique_ptr<cpu_exec_env> build() { return std::move(env_); }
+			unique_ptr<cpu_exec_env> build() {
+				env_->state_ = env_state::READY;
+				return std::move(env_); 
+			}
 
 		private:
 			unique_ptr<cpu_exec_env> env_;
@@ -112,12 +115,17 @@ namespace plearn {
 
 		static void execute_op(operation op, vector<cpu_tensor> inputs, cpu_tensor& output) {
 			switch (op.type_) {
+				case op_type::noop:
+					break;
 				case op_type::matmul:
 					cpu_matmul(op, inputs, output);
+					break;
 				case op_type::matvecmul:
 					cpu_matvecmul(op, inputs, output);
+					break;
 				case op_type::add:
 					cpu_add(op, inputs, output);
+					break;
 			}
 
 		}
