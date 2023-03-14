@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bits/iterator_concepts.h>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -25,6 +26,12 @@ namespace plearn {
 			return size;
 		}
 		shape() = default;
+
+		template<typename IntType, template <typename> class coll>
+		shape(auto rank, const coll<IntType>& _dims) : 
+			rank{rank}, dims{} {
+				std::copy(_dims.begin(), _dims.end(), dims.begin());
+			}
 
 		shape(std::integral auto...dims) : 
 			rank{sizeof...(dims)}, dims{dims...} {}
@@ -62,8 +69,6 @@ namespace plearn {
 
 
 	using node_id = int;
-
-	struct op_node;
 
 	struct tensor_node {
 		node_id id_;

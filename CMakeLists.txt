@@ -27,7 +27,9 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 
-add_library(plearn_core INTERFACE)
+add_library(plearn_core STATIC
+	include/gen/call_graph.pb.cc
+	)
 target_include_directories(plearn_core INTERFACE include)
 target_link_libraries(plearn_core INTERFACE
 	${CONAN_LIBS}
@@ -43,6 +45,7 @@ if (PLEARN_TEST)
 		test/call_graph_test.cpp
 		test/executor_test.cpp
 		test/cpu_ops_test.cpp
+		test/persistence_test.cpp
 		)
 	target_link_libraries(unit_test PRIVATE CONAN_PKG::gtest plearn_core)
 	# gtest_discover_tests(unit_test)

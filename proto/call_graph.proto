@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package plearn;
+
+enum OpTypeM {
+	NOOP = 0;
+	MATMUL = 1;
+}
+
+message OperationM {
+	OpTypeM opType = 1;
+}
+
+message ShapeM {
+	int32 rank = 1;
+	repeated int64 dims = 2;
+}
+
+message OpNodeM {
+	int32 id = 1;
+	OperationM op = 2;
+	repeated int32 inputs = 3;
+	int32 output = 4;
+}
+
+message TensorNodeM {
+	int32 id = 1;
+	ShapeM shape = 2;
+	repeated int32 outputs = 3;
+}
+
+
+message CallGraphM {
+	map<int32, OpNodeM> opNodes = 1;
+	map<int32, TensorNodeM> flowNodes = 2;
+	map<int32, TensorNodeM> dataNodes = 3;
+	repeated int32 inNodes = 4;
+	repeated int32 outNodes = 5;
+}
+
