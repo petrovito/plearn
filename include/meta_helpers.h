@@ -8,6 +8,7 @@ namespace plearn {
 	template<uint64_t... ints>
 		struct IntSeq{
 			static constexpr std::array<uint64_t, sizeof...(ints)> arr = {ints...};
+			static constexpr uint64_t size = sizeof...(ints);
 		};
 
 	template<uint64_t first, uint64_t... rest>

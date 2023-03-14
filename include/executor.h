@@ -27,11 +27,11 @@ namespace plearn {
 				}
 				for (auto& [id, node]: graph.data_nodes_) {
 					env_->tensor_nodes_.insert(
-							{id, {.id_=id, .shape_=node.tensor_->shape_}});
+							{id, {.id_=id, .shape_=node.shape_}});
 					data_nodes_.push_back(id);
 				}
 				for (auto& [id, node]: graph.op_nodes_) {
-					env_->op_nodes_.insert({id, {.id_=id}});
+					env_->op_nodes_.insert({id, {.id_=id, .op_=node.op_}});
 				}
 
 				//wiring
@@ -41,7 +41,7 @@ namespace plearn {
 						bool is_flow_node = graph.flow_nodes_.contains(tensorn_id);
 						auto& cpu_tensor_node = env_->tensor_nodes_[tensorn_id];
 						cpu_op_node.deps_.push_back({
-								.ten_node_=&cpu_tensor_node, .id_=cpu_tensor_node.id_, 
+								.id_=cpu_tensor_node.id_, .ten_node_=&cpu_tensor_node, 
 								.is_ready_=true, .is_flow_node_=is_flow_node});
 						cpu_tensor_node.outputs_.push_back(&cpu_op_node);
 					}
@@ -86,6 +86,7 @@ namespace plearn {
 	class CpuExecutor {
 
 		static unique_ptr<cpu_exec_env> create_env(call_graph& graph) {
+			return {};
 		}
 		
 		static vector<cpu_tensor> execute(const vector<cpu_tensor>& input, cpu_exec_env& env) {

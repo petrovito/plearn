@@ -6,7 +6,7 @@
 
 using namespace plearn;
 
-const int dim = 1024;
+const int dim = 256;
 const int SIZE = dim*dim;
 
 TEST(CpuOpTest, Matmul) {

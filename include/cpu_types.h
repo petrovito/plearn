@@ -70,8 +70,8 @@ namespace plearn {
 	struct cpu_tensor_node {
 		node_id id_;
 		shape shape_;
-		cpu_tensor tensor_;
-		vector<cpu_op_node*> outputs_;
+		cpu_tensor tensor_{};
+		vector<cpu_op_node*> outputs_{};
 
 		void set_cpu_tensor(const cpu_tensor& cpu_tens) {
 			assert(cpu_tens.meta_data().shape_ == shape_);
@@ -84,19 +84,19 @@ namespace plearn {
 
 	struct cpu_op_node {
 		struct dep {
-			cpu_tensor_node* ten_node_;
 			node_id id_;
-			bool is_ready_;
-			bool is_flow_node_;
+			cpu_tensor_node* ten_node_{nullptr};
+			bool is_ready_{false};
+			bool is_flow_node_{false};
 		};
 
 		node_id id_;
 		operation op_;
 
-		vector<dep> deps_;
-		int unready_deps_;
-		int flow_dep_count_;
-		cpu_tensor_node* out_;
+		vector<dep> deps_{};
+		int unready_deps_{0};
+		int flow_dep_count_{0};
+		cpu_tensor_node* out_{nullptr};
 
 		//returns true IFF this op_node just become ready as a result of this dep
 		bool dep_ready(node_id id) {
