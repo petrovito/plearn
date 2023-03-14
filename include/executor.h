@@ -18,7 +18,9 @@ namespace plearn {
 
 		public:
 			cpu_exec_env_builder(const call_graph& graph) :
-				env_{std::make_unique<cpu_exec_env>()}
+				env_{std::make_unique<cpu_exec_env>()},
+				in_nodes_{graph.in_nodes_}, 
+				out_nodes_{graph.out_nodes_}
 			{
 				//create nodes
 				for (auto& [id, node]: graph.flow_nodes_) {
@@ -45,28 +47,34 @@ namespace plearn {
 								.is_ready_=true, .is_flow_node_=is_flow_node});
 						cpu_tensor_node.outputs_.push_back(&cpu_op_node);
 					}
+					cpu_op_node.out_ = &env_->tensor_nodes_[op_node.out_];
 				}
 
-				for (auto in_node_id: graph.in_nodes_) {
+				for (auto in_node_id: in_nodes_) {
 					auto& in_node = env_->tensor_nodes_[in_node_id];
 					env_->in_nodes_.push_back(&in_node);
 				}
-				//TODO outnodes?
+				for (auto out_node_id: out_nodes_) {
+					auto& out_node = env_->tensor_nodes_[out_node_id];
+					env_->out_nodes_.push_back(&out_node);
+				}
+				for (auto flow_node_id: flow_nodes_) {
+					auto& flow_node = env_->tensor_nodes_[flow_node_id];
+					env_->flow_nodes_.push_back(&flow_node);
+				}
 			}
 
 			cpu_exec_env_builder& alloc_flow_mem() {
+				//TODO except for input nodes
 				for (auto flown_id: flow_nodes_) {
 					auto& flow_n = env_->tensor_nodes_[flown_id];
 					tensor tens(flow_n.shape_);
-					auto cpu_tens = cpu_tensor_factory::allocate(tens);
-					env_->tensors_.push_back(cpu_tens);
-					flow_n.tensor_ = cpu_tens;
-				} 
+					flow_n.tensor_ = cpu_tensor_factory::allocate(tens);				} 
 				return *this;
 			}
 
-			cpu_exec_env_builder& load_data_nodes(hash_map<node_id, cpu_tensor> cpu_tensors) {
-				for (auto& [n_id, cpu_tens]: cpu_tensors) {
+			cpu_exec_env_builder& load_data_nodes(hash_map<node_id, cpu_tensor> data_tensors) {
+				for (auto& [n_id, cpu_tens]: data_tensors) {
 					env_->tensor_nodes_[n_id].tensor_ = cpu_tens;
 				}
 				return *this;

@@ -200,10 +200,8 @@ namespace plearn {
 			vector<cpu_tensor_node*> out_nodes_;
 			vector<cpu_tensor_node*> flow_nodes_;
 
-			//owned tensors
-			vector<cpu_tensor> tensors_;
-
 		friend class cpu_exec_env_builder;
+		friend class CpuExecutor_ExecEnvBuilder_Test;
 	};
 	
 }
