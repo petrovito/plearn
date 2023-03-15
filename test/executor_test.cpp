@@ -132,5 +132,42 @@ TEST(CpuExecutor, Execute) {
 
 }
 
+TEST(CpuExecutor, Execute2) {
+	call_graph_builder builder;
+	auto inn_id = builder.add_input_node(shape{2});
+	auto data1n_id = builder.add_data_node(shape{2, 2});
+	auto [op1n_id, outn_id] = 
+		builder.add_op_node(matvecmul{}, {data1n_id,inn_id}, shape{2});
+	builder.make_output(outn_id);
+	auto cg = builder.build();
+
+	hash_map<node_id, cpu_tensor> data_tensors;
+	for (auto& [id, node]: cg.data_nodes_) {
+		data_tensors[id] = cpu_tensor_factory::allocate(node.shape_);
+		auto buf = data_tensors[id].get_content()->buf;
+		buf[0] = 1;
+		buf[1] = 2;
+		buf[2] = 3;
+		buf[3] = 4;
+	}
+
+	auto in_tensor = cpu_tensor_factory::allocate(shape{2});
+	auto buf = in_tensor.get_content()->buf;
+	buf[0] = 1;
+	buf[1] = 2;
+
+	cpu_exec_env_builder env_builder(cg);
+	auto env = env_builder .alloc_flow_mem()
+		.load_data_nodes(data_tensors)
+		.build();
+
+	auto out_tensors = CpuExecutor::execute({in_tensor}, *env);
+	
+	ASSERT_EQ(out_tensors.size(), 1);
+	ASSERT_EQ(out_tensors[0].meta_data().shape_, shape{2});
+	auto out_buf = out_tensors[0].get_content()->buf;
+	ASSERT_FLOAT_EQ(out_buf[0], 5);
+	ASSERT_FLOAT_EQ(out_buf[1], 11);
+}
 }
 

@@ -4,12 +4,9 @@
 
 namespace plearn {
 	
-#pragma GCC optimize("O3,unroll-loops")
-#pragma GCC target("avx2,tune=native")
-	inline void _cpu_matmul(float* __restrict__ A, float* __restrict__ B,
-			float* __restrict__ C, int m, int n, int k) {
+	inline void _cpu_matmul(float* A, float* B,
+			float* C, int m, int n, int k) {
 		
-		#pragma GCC ivdep
 		for (int i = 0; i < m; ++i) {
 			for (int l = 0; l < n; ++l) {
 				for (int j = 0; j < k; ++j) {

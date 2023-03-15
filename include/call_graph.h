@@ -71,6 +71,10 @@ namespace plearn {
 		matmul() : operation{op_type::matmul} {}
 	};
 
+	struct matvecmul : public operation {
+		matvecmul() : operation{op_type::matvecmul} {}
+	};
+
 
 
 	using node_id = int;

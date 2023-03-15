@@ -1,4 +1,5 @@
 build/
-Debug/
+Debug
 Release/
 .cache/
+
