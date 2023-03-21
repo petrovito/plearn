@@ -2,7 +2,7 @@
 
 #include <array>
 #include <cstdint>
-#include <tensor.h>
+#include "tensor.h"
 #include <type_traits>
 #include <concepts>
 #include <utility>

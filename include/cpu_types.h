@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <bits/ranges_util.h>
-#include <call_graph.h>
+#include "call_graph.h"
 #include <cassert>
 #include <cstdint>
 #include <unordered_set>
