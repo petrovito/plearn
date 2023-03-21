@@ -10,13 +10,13 @@ namespace plearn {
 TEST(CpuExecutor, ExecEnvBuilder) {
 
 	call_graph_builder cg_builder;
-	auto inn_id = cg_builder.add_input_node(shape{768});
-	auto data1n_id = cg_builder.add_data_node(shape{768, 128});
+	auto inn_id = cg_builder.add_input_node(shape_t{768});
+	auto data1n_id = cg_builder.add_data_node(shape_t{768, 128});
 	auto [op1n_id, flown_id] = 
-		cg_builder.add_op_node(matmul{}, {inn_id, data1n_id}, shape{128});
-	auto data2n_id = cg_builder.add_data_node(shape{128, 10});
+		cg_builder.add_op_node(matmul{}, {inn_id, data1n_id}, shape_t{128});
+	auto data2n_id = cg_builder.add_data_node(shape_t{128, 10});
 	auto [op2n_id, outn_id] = 
-		cg_builder.add_op_node(matmul{}, {flown_id, data2n_id}, shape{10});
+		cg_builder.add_op_node(matmul{}, {flown_id, data2n_id}, shape_t{10});
 	cg_builder.make_output(outn_id);
 	auto cg = cg_builder.build();
 
@@ -66,13 +66,13 @@ TEST(CpuExecutor, ExecEnvBuilder) {
 TEST(CpuExecutor, ExecEnvExecute) {
 	
 	call_graph_builder cg_builder;
-	auto inn_id = cg_builder.add_input_node(shape{768});
-	auto data1n_id = cg_builder.add_data_node(shape{768, 128});
+	auto inn_id = cg_builder.add_input_node(shape_t{768});
+	auto data1n_id = cg_builder.add_data_node(shape_t{768, 128});
 	auto [op1n_id, flown_id] = 
-		cg_builder.add_op_node(noop{}, {inn_id, data1n_id}, shape{128});
-	auto data2n_id = cg_builder.add_data_node(shape{128, 10});
+		cg_builder.add_op_node(noop{}, {inn_id, data1n_id}, shape_t{128});
+	auto data2n_id = cg_builder.add_data_node(shape_t{128, 10});
 	auto [op2n_id, outn_id] = 
-		cg_builder.add_op_node(noop{}, {flown_id, data2n_id}, shape{10});
+		cg_builder.add_op_node(noop{}, {flown_id, data2n_id}, shape_t{10});
 	cg_builder.make_output(outn_id);
 	auto cg = cg_builder.build();
 
@@ -86,7 +86,7 @@ TEST(CpuExecutor, ExecEnvExecute) {
 		.load_data_nodes(data_tensors)
 		.build();
 
-	cpu_tensor in_tensor = cpu_tensor_factory::allocate(shape{768});
+	cpu_tensor in_tensor = cpu_tensor_factory::allocate(shape_t{768});
 	env->reset({in_tensor});
 	ASSERT_EQ(env->unready_out_tens_, 1);
 	ASSERT_EQ(env->state_, env_state::IN_PROGRESS);
@@ -108,7 +108,7 @@ TEST(CpuExecutor, ExecEnvExecute) {
 
 	auto output = env->output_tensors();
 	ASSERT_EQ(output.size(), 1);
-	ASSERT_EQ(output[0].meta_data().shape_, shape{10});
+	ASSERT_EQ(output[0].meta_data().shape(), shape_t{10});
 }
 
 TEST(CpuExecutor, Execute) {
@@ -124,20 +124,20 @@ TEST(CpuExecutor, Execute) {
 		.load_data_nodes(data_tensors)
 		.build();
 
-	cpu_tensor in_tensor = cpu_tensor_factory::allocate(shape{768});
+	cpu_tensor in_tensor = cpu_tensor_factory::allocate(shape_t{768});
 	auto out_tensors = CpuExecutor::execute({in_tensor}, *env);
 
 	ASSERT_EQ(out_tensors.size(), 1);
-	ASSERT_EQ(out_tensors[0].meta_data().shape_, shape{10});
+	ASSERT_EQ(out_tensors[0].meta_data().shape(), shape_t{10});
 
 }
 
 TEST(CpuExecutor, Execute2) {
 	call_graph_builder builder;
-	auto inn_id = builder.add_input_node(shape{2});
-	auto data1n_id = builder.add_data_node(shape{2, 2});
+	auto inn_id = builder.add_input_node(shape_t{2});
+	auto data1n_id = builder.add_data_node(shape_t{2, 2});
 	auto [op1n_id, outn_id] = 
-		builder.add_op_node(matvecmul{}, {data1n_id,inn_id}, shape{2});
+		builder.add_op_node(matvecmul{}, {data1n_id,inn_id}, shape_t{2});
 	builder.make_output(outn_id);
 	auto cg = builder.build();
 
@@ -151,7 +151,7 @@ TEST(CpuExecutor, Execute2) {
 		buf[3] = 4;
 	}
 
-	auto in_tensor = cpu_tensor_factory::allocate(shape{2});
+	auto in_tensor = cpu_tensor_factory::allocate(shape_t{2});
 	auto buf = in_tensor.get_content()->buf;
 	buf[0] = 1;
 	buf[1] = 2;
@@ -164,7 +164,7 @@ TEST(CpuExecutor, Execute2) {
 	auto out_tensors = CpuExecutor::execute({in_tensor}, *env);
 	
 	ASSERT_EQ(out_tensors.size(), 1);
-	ASSERT_EQ(out_tensors[0].meta_data().shape_, shape{2});
+	ASSERT_EQ(out_tensors[0].meta_data().shape(), shape_t{2});
 	auto out_buf = out_tensors[0].get_content()->buf;
 	ASSERT_FLOAT_EQ(out_buf[0], 5);
 	ASSERT_FLOAT_EQ(out_buf[1], 11);

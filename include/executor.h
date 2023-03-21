@@ -68,12 +68,12 @@ namespace plearn {
 				//TODO except for input nodes
 				for (auto flown_id: flow_nodes_) {
 					auto& flow_n = env_->tensor_nodes_[flown_id];
-					tensor tens(flow_n.shape_);
+					tensor tens = tensor_factory::create(flow_n.shape_);
 					flow_n.tensor_ = cpu_tensor_factory::allocate(tens);				} 
 				return *this;
 			}
 
-			cpu_exec_env_builder& load_data_nodes(hash_map<node_id, cpu_tensor> data_tensors) {
+			cpu_exec_env_builder& load_data_nodes(const hash_map<node_id, cpu_tensor>& data_tensors) {
 				for (auto& [n_id, cpu_tens]: data_tensors) {
 					env_->tensor_nodes_[n_id].tensor_ = cpu_tens;
 				}

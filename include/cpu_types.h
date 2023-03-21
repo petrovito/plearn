@@ -47,7 +47,7 @@ namespace plearn {
 			/**
 			 *  Zero out tensor content.
 			 */
-			void zero() { std::fill_n(content_->buf, meta_data_.shape_.size(), 0); }
+			void zero() { std::fill_n(content_->buf, meta_data_.shape().size(), 0); }
 
 		private:
 			tensor meta_data_;
@@ -59,8 +59,12 @@ namespace plearn {
 
 	class cpu_tensor_factory {
 		public:
+			static cpu_tensor allocate(const shape_t& shape) {
+				return allocate(tensor_factory::create(shape));
+			}
+
 			static cpu_tensor allocate(const tensor& tens) {
-				auto buf = std::make_shared<tensor_buf>(tens.shape_.size());
+				auto buf = std::make_shared<tensor_buf>(tens.shape().size());
 				return cpu_tensor(tens, buf);
 			}
 	};
@@ -69,12 +73,12 @@ namespace plearn {
 
 	struct cpu_tensor_node {
 		node_id id_;
-		shape shape_;
+		shape_t shape_;
 		cpu_tensor tensor_{};
 		vector<cpu_op_node*> outputs_{};
 
 		void set_cpu_tensor(const cpu_tensor& cpu_tens) {
-			assert(cpu_tens.meta_data().shape_ == shape_);
+			assert(cpu_tens.meta_data().shape() == shape_);
 			tensor_ = cpu_tens;
 		}
 	};

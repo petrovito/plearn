@@ -19,12 +19,12 @@ namespace plearn {
 
 	class ShapeConverter {
 		public:
-			static shape to_shape(const ShapeM& s) {
+			static shape_t to_shape(const ShapeM& s) {
 				auto dims = to_vector<uint64_t, long>(s.dims());
-				return shape(dims);
+				return shape_t(dims);
 			}
 
-			static ShapeM* to_proto(const shape& s) {
+			static ShapeM* to_proto(const shape_t& s) {
 				ShapeM* s_m = new ShapeM;
 				s_m->set_rank(s.rank);
 				for (auto dim : s.dims) {

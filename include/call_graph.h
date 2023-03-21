@@ -14,7 +14,7 @@ namespace plearn {
 
 	using std::vector;
 
-	struct shape {
+	struct shape_t {
 		int rank;
 		vector<std::uint64_t> dims;
 
@@ -25,7 +25,7 @@ namespace plearn {
 			}
 			return size;
 		}
-		shape() = default;
+		shape_t() = default;
 
 		/* template<typename IntType, template <typename> class coll> */
 		/* shape(const coll<IntType>& _dims) : */ 
@@ -33,21 +33,40 @@ namespace plearn {
 		/* 		std::copy(_dims.begin(), _dims.end(), dims.begin()); */
 		/* 	} */
 
-		shape(vector<uint64_t> _dims) : 
+		shape_t(vector<uint64_t> _dims) : 
 			rank{_dims.size()}, dims{_dims} {}
 
-		shape(std::integral auto...dims) : 
+		shape_t(std::integral auto...dims) : 
 			rank{sizeof...(dims)}, dims{dims...} {}
 
-		friend auto operator<=>(const shape&, const shape&) = default;
+		friend auto operator<=>(const shape_t&, const shape_t&) = default;
 	};
+
+	using tensor_id = uint64_t;
 
 	class tensor {
 		public:
 			tensor() = default;
-			tensor(const shape& s) : shape_{s} {}
-			shape shape_;
+			shape_t shape() const { return shape_; }
+			tensor_id id() const { return id_; }
+		private:
+			tensor(const shape_t& s, tensor_id id) : shape_{s}, id_{id} {}
+			shape_t shape_;
+			tensor_id id_;
+		friend class tensor_factory;
 
+	};
+	
+	class tensor_factory {
+		public:
+			static tensor create(const shape_t& s) {
+				return tensor{s, next_id()};
+			}
+		private:
+			static tensor_id next_id() {
+				static tensor_id id = 1;
+				return id++;
+			}
 	};
 
 	enum class op_type {
@@ -81,7 +100,7 @@ namespace plearn {
 
 	struct tensor_node {
 		node_id id_;
-		shape shape_;
+		shape_t shape_;
 		vector<node_id> outputs_{};
 
 		friend auto operator<=>(const tensor_node&, const tensor_node&) = default;
@@ -115,11 +134,11 @@ namespace plearn {
 
 	class call_graph_builder {
 		public:
-			node_id add_input_node(shape s) {
+			node_id add_input_node(shape_t s) {
 				return add_flow_node(s, true);
 			}
 
-			node_id add_data_node(shape s) {
+			node_id add_data_node(shape_t s) {
 				node_id id = next_id_++;
 				tensor_node tn{id, s};
 				data_nodes_[id] = tn;
@@ -129,7 +148,7 @@ namespace plearn {
 			
 			//return
 			std::tuple<node_id, node_id> add_op_node(operation op,
-					vector<node_id> inputs, shape out_shape) {
+					vector<node_id> inputs, shape_t out_shape) {
 				node_id id = next_id_++;
 				auto out_id = add_flow_node(out_shape);
 				op_node on{id, op, inputs, out_id};
@@ -156,7 +175,7 @@ namespace plearn {
 			}
 
 		private:
-			node_id add_flow_node(shape s, bool is_input=false) {
+			node_id add_flow_node(shape_t s, bool is_input=false) {
 				node_id id = next_id_++;
 				tensor_node tn{id, s};
 				flow_nodes_[id] = tn;
