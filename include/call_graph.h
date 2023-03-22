@@ -195,4 +195,30 @@ namespace plearn {
 
 	};
 
+
+	/**
+	 *  Class that runs over the operations of a call graph,
+	 *  in an order that respects the dependencies between the operations.
+	 *  I.e. if an operation depends on the result of another operation,
+	 *  the latter will be reached before the former.
+	 */
+	class call_graph_runner {
+		public:
+			call_graph_runner(const call_graph& cg) : cg_{cg} { }
+
+			//Start a run
+			void reset() {
+				//TODO
+			}
+
+			//Next available operation
+			void next() {
+				//TODO
+			}
+
+
+		private:
+			const call_graph& cg_;
+	};
+
 }
