@@ -1,13 +1,14 @@
 #pragma once
 
-#include <bits/iterator_concepts.h>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include "operation.h"
+#include <queue>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace plearn {
@@ -97,6 +98,7 @@ namespace plearn {
 
 
 	using node_id = int;
+	using op_node_id = node_id;
 
 	struct tensor_node {
 		node_id id_;
@@ -110,7 +112,7 @@ namespace plearn {
 		node_id id_;
 		operation op_;
 
-		vector<node_id> inputs_;
+		vector<node_id> inputs_; //dependencies
 		node_id out_{};
 
 		friend auto operator<=>(const op_node&, const op_node&) = default;
@@ -195,6 +197,12 @@ namespace plearn {
 
 	};
 
+	enum class env_state {
+		IN_PROGRESS,
+		READY,
+	};
+
+	using std::unordered_set;
 
 	/**
 	 *  Class that runs over the operations of a call graph,
@@ -203,22 +211,81 @@ namespace plearn {
 	 *  the latter will be reached before the former.
 	 */
 	class call_graph_runner {
+		struct node_info {
+				op_node_id id_;
+				int deps_ = 0;
+				int unready_deps_ = 0;
+		};
 		public:
-			call_graph_runner(const call_graph& cg) : cg_{cg} { }
+			call_graph_runner(const call_graph& cg) : cg_{cg} {
+				//add node_info for each op node
+				for (auto& [id, op]: cg_.op_nodes_) {
+					op_info_[id] = {id};
+				}
+				//count flow dependencies
+				for (auto& [id, flow_n]: cg_.flow_nodes_) {
+					for (auto op_id: flow_n.outputs_) {
+						op_info_[op_id].deps_++;
+					}
+				}
+			}
 
-			//Start a run
+			/**
+			 * Start a run: reset dependency counters and available operations.
+			 */
 			void reset() {
-				//TODO
+				state_ = env_state::IN_PROGRESS;
+				unready_out_tens_ = cg_.out_nodes_.size();
+				//reset dependency counters
+				for (auto& [id, op]: cg_.op_nodes_) {
+					op_info_[id].unready_deps_ = op_info_[id].deps_;
+				}
+				//clear ready ops and find initial ready ops
+				ready_ops_ = unordered_set<op_node_id>{};
+				for (auto inn_id: cg_.in_nodes_) {
+					for (auto op_id: cg_.flow_nodes_.at(inn_id).outputs_) {
+						decrement_deps(op_info_.at(op_id));
+					}
+				}
 			}
 
-			//Next available operation
-			void next() {
-				//TODO
+			/**
+			 * Call this function when an operation has finished executing.
+			 */
+			void op_finished(op_node_id op) {
+				//TODO concurrency
+				//remove op from ready ops
+				ready_ops_.erase(op);
+				//decrement dependencies of output tensor
+				auto out_tensn_id = cg_.op_nodes_.at(op).out_;
+				for (auto op_id: cg_.flow_nodes_.at(out_tensn_id).outputs_) {
+					decrement_deps(op_info_.at(op_id));
+				}
+				//check if output tensor is ready
+				if (std::count(cg_.out_nodes_.begin(), cg_.out_nodes_.end(), out_tensn_id) > 0) {
+					unready_out_tens_--;
+					if (unready_out_tens_ == 0) {
+						state_ = env_state::READY;
+					}
+				}
 			}
 
+			const unordered_set<op_node_id>& ready_ops() const { return ready_ops_; }
 
 		private:
+			void decrement_deps(node_info& n_info) {
+				n_info.unready_deps_--;
+				if (n_info.unready_deps_ == 0) {
+					ready_ops_.insert(n_info.id_);
+				}
+			}
+
 			const call_graph& cg_;
+			env_state state_;
+			unordered_set<op_node_id> ready_ops_;
+			hash_map<op_node_id, node_info> op_info_;
+			int unready_out_tens_;
+			
 	};
 
 }

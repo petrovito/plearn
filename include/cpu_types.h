@@ -112,10 +112,6 @@ namespace plearn {
 		}
 	};
 
-	enum class env_state {
-		IN_PROGRESS,
-		READY,
-	};
 
 	using std::queue;
 	using std::unordered_set;
