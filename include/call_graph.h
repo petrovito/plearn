@@ -261,7 +261,7 @@ namespace plearn {
 				for (auto op_id: cg_.flow_nodes_.at(out_tensn_id).outputs_) {
 					decrement_deps(op_info_.at(op_id));
 				}
-				//check if output tensor is ready
+				//check if op out tensor is a graph output
 				if (std::count(cg_.out_nodes_.begin(), cg_.out_nodes_.end(), out_tensn_id) > 0) {
 					unready_out_tens_--;
 					if (unready_out_tens_ == 0) {
@@ -269,6 +269,8 @@ namespace plearn {
 					}
 				}
 			}
+
+			env_state state() const { return state_; }
 
 			const unordered_set<op_node_id>& ready_ops() const { return ready_ops_; }
 
@@ -281,7 +283,7 @@ namespace plearn {
 			}
 
 			const call_graph& cg_;
-			env_state state_;
+			env_state state_ = env_state::READY;
 			unordered_set<op_node_id> ready_ops_;
 			hash_map<op_node_id, node_info> op_info_;
 			int unready_out_tens_;

@@ -16,6 +16,12 @@
 namespace plearn {
 
 
+	/**
+	 * A gradient tensor of tensor WRT. an input tensor.
+	 * (For some underlying function)
+	 * Identity and independentness (null-tensor) are not stored as a cpu_tensor, but
+	 * just a boolean field.
+	 */
 	struct cpu_gradient {
 		cpu_gradient(bool identity) : 
 			grad_{}, identity_(identity), independent_(false) {};
@@ -29,9 +35,13 @@ namespace plearn {
 	const cpu_gradient independent_gradient = cpu_gradient(false, true);
 
 
+	/**
+	 * A derivative system is a set of gradients for a given tensor.
+	 * The gradients are indexed by the tensor id of the input tensor.
+	 * The gradients are stored in a hash map.
+	 */
 	struct cpu_derivative_system {
-		cpu_derivative_system() :
-			grads{} {};
+		cpu_derivative_system() : grads{} {};
 		
 		static cpu_derivative_system identity(tensor_id id) {
 			cpu_derivative_system d;
@@ -91,8 +101,8 @@ namespace plearn {
 
 			}
 
-			cpu_forward_prop_diff build() {
-				return cpu_forward_prop_diff();
+			unique_ptr<cpu_forward_prop_diff> build() {
+				return std::move(diff_env_);
 			}
 
 
