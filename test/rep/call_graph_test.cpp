@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "rep/call_graph.h"
+#include "rep/call_graph_runner.h"
 
-using namespace plearn;
+using namespace plearn::rep;
 
 TEST(CallGraph, Builder) {
 
@@ -71,6 +72,6 @@ TEST(CallGraph, Runner) {
 	ASSERT_TRUE(ready_ops.contains(op2n_id));
 	runner.op_finished(op2n_id);
 	ASSERT_EQ(ready_ops.size(), 0);
-	ASSERT_EQ(runner.state(), env_state::READY);
+	ASSERT_EQ(runner.state(), run_state::READY);
 }
 

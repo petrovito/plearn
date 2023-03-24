@@ -5,7 +5,7 @@
 
 #include "backend/cpu/cpu_ops.h"
 
-using namespace plearn;
+using namespace plearn::backend::cpu;
 
 const int dim = 256;
 const int SIZE = dim*dim;
@@ -22,6 +22,10 @@ TEST(CpuOpTest, Matmul) {
 	for (int i = 0; i < dim; i++)
 		for (int j = 0; j < dim; j++)
 			ASSERT_DOUBLE_EQ(dim, c[i*dim +j]);
+
+	delete[] a;
+	delete[] b;
+	delete[] c;
 }
 
 
@@ -36,6 +40,10 @@ TEST(CpuOpTest, MatVecMul) {
 	_cpu_matvecmul(a, b, c, dim, dim);
 	for (int i = 0; i < dim; i++)
 		ASSERT_DOUBLE_EQ(dim, c[i]);
+
+	delete[] a;
+	delete[] b;
+	delete[] c;
 }
 
 TEST(CpuOpTest, Add) {
@@ -50,6 +58,10 @@ TEST(CpuOpTest, Add) {
 	for (int i = 0; i < dim; i++)
 		for (int j = 0; j < dim; j++)
 			ASSERT_DOUBLE_EQ(3, c[i*dim +j]);
+
+	delete[] a;
+	delete[] b;
+	delete[] c;
 }
 
 TEST(CpuOpTest, MatmulAvx) {
@@ -64,5 +76,9 @@ TEST(CpuOpTest, MatmulAvx) {
 	for (int i = 0; i < dim; i++)
 		for (int j = 0; j < dim; j++)
 			ASSERT_DOUBLE_EQ(dim, c[i*dim +j]);
+
+	delete[] a;
+	delete[] b;
+	delete[] c;
 }
 

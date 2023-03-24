@@ -3,11 +3,11 @@
 #include "rep/call_graph.h"
 
 #include "backend/cpu/cpu_types.h"
-#include "cpu_op_impl.h"
+#include "backend/cpu/cpu_op_impl.h"
 
-namespace plearn {
+namespace plearn::backend::cpu {
 
-	inline void cpu_matmul(operation, vector<cpu_tensor> inputs, cpu_tensor& output) {
+	inline void cpu_matmul(operation, const vector<cpu_tensor>& inputs, cpu_tensor& output) {
 		auto mat1 = inputs[0].get_content()->buf;		
 		auto mat2 = inputs[1].get_content()->buf;		
 		auto mat_out = output.get_content()->buf;
@@ -17,7 +17,16 @@ namespace plearn {
 				shape1.dims[shape1.rank-1], shape2.dims[shape2.rank -1]);
 	}
 
-	inline void cpu_matvecmul(operation, vector<cpu_tensor> inputs, cpu_tensor& output) {
+	inline void cpu_vecmatmul(operation, const vector<cpu_tensor>& inputs, cpu_tensor& output) {
+		auto vec = inputs[0].get_content()->buf;		
+		auto mat2 = inputs[1].get_content()->buf;		
+		auto mat_out = output.get_content()->buf;
+		auto shape2 = inputs[1].meta_data().shape();
+		_cpu_vecmatmul(vec, mat2, mat_out, shape2.dims[shape2.rank-2], 
+				shape2.dims[shape2.rank-1]);
+	}
+
+	inline void cpu_matvecmul(operation, const vector<cpu_tensor>& inputs, cpu_tensor& output) {
 		auto mat1 = inputs[0].get_content()->buf;		
 		auto mat2 = inputs[1].get_content()->buf;		
 		auto mat_out = output.get_content()->buf;
@@ -26,7 +35,7 @@ namespace plearn {
 				shape1.dims[shape1.rank-1]);
 	}
 
-	inline void cpu_add(operation, vector<cpu_tensor> inputs, cpu_tensor& output) {
+	inline void cpu_add(operation, const vector<cpu_tensor>& inputs, cpu_tensor& output) {
 		auto mat1 = inputs[0].get_content()->buf;		
 		auto mat2 = inputs[1].get_content()->buf;		
 		auto mat_out = output.get_content()->buf;

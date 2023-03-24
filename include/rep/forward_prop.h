@@ -8,12 +8,10 @@
 #include <vector>
 
 #include "rep/call_graph.h"
+#include "rep/call_graph_runner.h"
 
 
-namespace plearn {
-
-	using std::unique_ptr;
-
+namespace plearn::rep {
 
 	struct gradient {
 		//TODO maybe size infos?
@@ -141,7 +139,7 @@ namespace plearn {
 				call_graph_runner runner{graph_};
 				auto& ready_ops = runner.ready_ops();
 				runner.reset();
-				while (runner.state() == env_state::IN_PROGRESS) {
+				while (runner.state() == run_state::IN_PROGRESS) {
 					//select ready op node and its output
 					auto opn_id = *ready_ops.begin();
 					auto& opn = graph_.op_nodes_.at(opn_id);

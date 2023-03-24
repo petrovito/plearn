@@ -1,118 +1,14 @@
 #pragma once
 
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <queue>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#include "rep/rep_types.h"
 
-
-namespace plearn {
-
-	using std::vector;
-
-	struct shape_t {
-		int rank;
-		vector<std::uint64_t> dims;
-
-		uint64_t size() const {
-			std::size_t size = 1;
-			for (auto dim : dims) {
-				size *= dim;
-			}
-			return size;
-		}
-		shape_t() = default;
-
-		/* template<typename IntType, template <typename> class coll> */
-		/* shape(const coll<IntType>& _dims) : */ 
-		/* 	rank{_dims.size()}, dims{} { */
-		/* 		std::copy(_dims.begin(), _dims.end(), dims.begin()); */
-		/* 	} */
-
-		shape_t(vector<uint64_t> _dims) : 
-			rank{_dims.size()}, dims{_dims} {}
-
-		shape_t(std::integral auto...dims) : 
-			rank{sizeof...(dims)}, dims{dims...} {}
-
-		friend auto operator<=>(const shape_t&, const shape_t&) = default;
-	};
-
-	using tensor_id = uint64_t;
-
-	class tensor {
-		public:
-			tensor() = default;
-			shape_t shape() const { return shape_; }
-			tensor_id id() const { return id_; }
-		private:
-			tensor(const shape_t& s, tensor_id id) : shape_{s}, id_{id} {}
-			shape_t shape_;
-			tensor_id id_;
-		friend class tensor_factory;
-
-	};
-	
-	class tensor_factory {
-		public:
-			static tensor create(const shape_t& s) {
-				return tensor{s, next_id()};
-			}
-		private:
-			static tensor_id next_id() {
-				static tensor_id id = 1;
-				return id++;
-			}
-	};
-
-	enum class op_type {
-		noop,
-		identity,
-		matmul,
-		matvecmul,
-		add,
-	};
-
-	struct operation {
-		op_type type_;
-		
-		friend auto operator<=>(const operation&, const operation&) = default;
-	};
-
-	struct noop : public operation {
-		noop() : operation{op_type::noop} { }
-	};
-
-	struct matmul : public operation {
-		matmul() : operation{op_type::matmul} {}
-	};
-
-	struct matvecmul : public operation {
-		matvecmul() : operation{op_type::matvecmul} {}
-	};
-
-	struct add : public operation {
-		add() : operation{op_type::add} {}
-	};
-
-
-
-
-	using node_id = int;
-	using op_node_id = node_id;
-	using tensor_node_id = node_id;
+namespace plearn::rep {
 
 	struct tensor_node {
 		node_id id_;
 		shape_t shape_;
 		vector<node_id> outputs_{};
 		
-
 		friend auto operator<=>(const tensor_node&, const tensor_node&) = default;
 	};
 
@@ -131,8 +27,6 @@ namespace plearn {
 	};
 
 
-	template<typename K, typename V>
-	using hash_map = std::unordered_map<K, V>;
 
 	class call_graph {
 		public:
@@ -145,6 +39,7 @@ namespace plearn {
 
 			friend bool operator==(const call_graph& a, const call_graph& b) = default;	
 	};
+
 
 	class call_graph_builder {
 		public:
@@ -209,98 +104,5 @@ namespace plearn {
 
 	};
 
-	enum class env_state {
-		IN_PROGRESS,
-		READY,
-	};
-
-	using std::unordered_set;
-
-	/**
-	 *  Class that runs over the operations of a call graph,
-	 *  in an order that respects the dependencies between the operations.
-	 *  I.e. if an operation depends on the result of another operation,
-	 *  the latter will be reached before the former.
-	 */
-	class call_graph_runner {
-		struct node_info {
-				op_node_id id_;
-				int deps_ = 0;
-				int unready_deps_ = 0;
-		};
-		public:
-			call_graph_runner(const call_graph& cg) : cg_{cg} {
-				//add node_info for each op node
-				for (auto& [id, op]: cg_.op_nodes_) {
-					op_info_[id] = {id};
-				}
-				//count flow dependencies
-				for (auto& [id, flow_n]: cg_.flow_nodes_) {
-					for (auto op_id: flow_n.outputs_) {
-						op_info_[op_id].deps_++;
-					}
-				}
-			}
-
-			/**
-			 * Start a run: reset dependency counters and available operations.
-			 */
-			void reset() {
-				state_ = env_state::IN_PROGRESS;
-				unready_out_tens_ = cg_.out_nodes_.size();
-				//reset dependency counters
-				for (auto& [id, op]: cg_.op_nodes_) {
-					op_info_[id].unready_deps_ = op_info_[id].deps_;
-				}
-				//clear ready ops and find initial ready ops
-				ready_ops_ = unordered_set<op_node_id>{};
-				for (auto inn_id: cg_.in_nodes_) {
-					for (auto op_id: cg_.flow_nodes_.at(inn_id).outputs_) {
-						decrement_deps(op_info_.at(op_id));
-					}
-				}
-			}
-
-			/**
-			 * Call this function when an operation has finished executing.
-			 * Updates dependency counters and available operations.
-			 */
-			void op_finished(op_node_id op) {
-				//TODO concurrency
-				//remove op from ready ops
-				ready_ops_.erase(op);
-				//decrement dependencies of output tensor
-				auto out_tensn_id = cg_.op_nodes_.at(op).out_;
-				for (auto op_id: cg_.flow_nodes_.at(out_tensn_id).outputs_) {
-					decrement_deps(op_info_.at(op_id));
-				}
-				//check if op out tensor is a graph output
-				if (std::count(cg_.out_nodes_.begin(), cg_.out_nodes_.end(), out_tensn_id) > 0) {
-					unready_out_tens_--;
-					if (unready_out_tens_ == 0) {
-						state_ = env_state::READY;
-					}
-				}
-			}
-
-			env_state state() const { return state_; }
-
-			const unordered_set<op_node_id>& ready_ops() const { return ready_ops_; }
-
-		private:
-			void decrement_deps(node_info& n_info) {
-				n_info.unready_deps_--;
-				if (n_info.unready_deps_ == 0) {
-					ready_ops_.insert(n_info.id_);
-				}
-			}
-
-			const call_graph& cg_;
-			env_state state_ = env_state::READY;
-			unordered_set<op_node_id> ready_ops_;
-			hash_map<op_node_id, node_info> op_info_;
-			int unready_out_tens_;
-			
-	};
 
 }

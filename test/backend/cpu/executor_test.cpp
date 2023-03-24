@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 
+#include "backend/cpu/cpu_env.h"
 #include "rep/call_graph.h"
-#include "../rep/call_graph_test_helper.h"
-#include "backend/cpu/cpu_types.h"
 #include "environ/executor.h"
+#include "backend/cpu/cpu_types.h"
+#include "rep/rep_types.h"
 
-namespace plearn {
+namespace plearn::backend::cpu {
 
 
 TEST(CpuExecutor, ExecEnvBuilder) {
@@ -32,7 +33,7 @@ TEST(CpuExecutor, ExecEnvBuilder) {
 		.load_data_nodes(data_tensors)
 		.build();
 
-	ASSERT_EQ(env->state_, env_state::READY);
+	ASSERT_EQ(env->state_, run_state::READY);
 
 	ASSERT_EQ(env->flow_nodes_.size(), 3);
 	ASSERT_EQ(env->op_nodes_.size(), 2);
@@ -90,21 +91,21 @@ TEST(CpuExecutor, ExecEnvExecute) {
 	cpu_tensor in_tensor = cpu_tensor_factory::allocate(shape_t{768});
 	env->reset({in_tensor});
 	ASSERT_EQ(env->unready_out_tens_, 1);
-	ASSERT_EQ(env->state_, env_state::IN_PROGRESS);
+	ASSERT_EQ(env->state_, run_state::IN_PROGRESS);
 	ASSERT_EQ(env->ready_q_.size(), 1);
 	ASSERT_EQ(env->ready_q_.front(), &env->op_nodes_[op1n_id]);
 
 	auto op = env->pop_ready_op();
 	env->flow_node_ready(op->out_);
 	ASSERT_EQ(env->unready_out_tens_, 1);
-	ASSERT_EQ(env->state_, env_state::IN_PROGRESS);
+	ASSERT_EQ(env->state_, run_state::IN_PROGRESS);
 	ASSERT_EQ(env->ready_q_.size(), 1);
 	ASSERT_EQ(env->ready_q_.front(), &env->op_nodes_[op2n_id]);
 
 	op = env->pop_ready_op();
 	env->flow_node_ready(op->out_);
 	ASSERT_EQ(env->unready_out_tens_, 0);
-	ASSERT_EQ(env->state_, env_state::READY);
+	ASSERT_EQ(env->state_, run_state::READY);
 	ASSERT_EQ(env->ready_q_.size(), 0);
 
 	auto output = env->output_tensors();
@@ -113,7 +114,19 @@ TEST(CpuExecutor, ExecEnvExecute) {
 }
 
 TEST(CpuExecutor, Execute) {
-	auto cg = call_graph_example();
+	call_graph_builder cg_builder;
+
+	auto inn_id = cg_builder.add_input_node(shape_t{768});
+	auto data1n_id = cg_builder.add_data_node(shape_t{768, 128});
+	auto [op1n_id, flown_id] = 
+		cg_builder.add_op_node(vecmatmul{}, {inn_id, data1n_id}, shape_t{128});
+	auto data2n_id = cg_builder.add_data_node(shape_t{128, 10});
+	auto [op2n_id, outn_id] = 
+		cg_builder.add_op_node(vecmatmul{}, {flown_id, data2n_id}, shape_t{10});
+	cg_builder.make_output(outn_id);
+
+	auto cg = cg_builder.build();
+
 	cpu_exec_env_builder builder(cg);
 
 	hash_map<node_id, cpu_tensor> data_tensors;
@@ -121,7 +134,7 @@ TEST(CpuExecutor, Execute) {
 		data_tensors[id] = cpu_tensor_factory::allocate(node.shape_);
 	}
 
-	auto env = builder .alloc_flow_mem()
+	auto env = builder.alloc_flow_mem()
 		.load_data_nodes(data_tensors)
 		.build();
 
@@ -138,7 +151,7 @@ TEST(CpuExecutor, Execute2) {
 	auto inn_id = builder.add_input_node(shape_t{2});
 	auto data1n_id = builder.add_data_node(shape_t{2, 2});
 	auto [op1n_id, outn_id] = 
-		builder.add_op_node(matvecmul{}, {data1n_id,inn_id}, shape_t{2});
+		builder.add_op_node(vecmatmul{}, {inn_id,data1n_id}, shape_t{2});
 	builder.make_output(outn_id);
 	auto cg = builder.build();
 
@@ -167,8 +180,8 @@ TEST(CpuExecutor, Execute2) {
 	ASSERT_EQ(out_tensors.size(), 1);
 	ASSERT_EQ(out_tensors[0].meta_data().shape(), shape_t{2});
 	auto out_buf = out_tensors[0].get_content()->buf;
-	ASSERT_FLOAT_EQ(out_buf[0], 5);
-	ASSERT_FLOAT_EQ(out_buf[1], 11);
+	ASSERT_FLOAT_EQ(out_buf[0], 7);
+	ASSERT_FLOAT_EQ(out_buf[1], 10);
 }
 }
 

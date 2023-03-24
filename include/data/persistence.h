@@ -4,7 +4,7 @@
 
 #include "data/converter.h"
 
-namespace plearn {
+namespace plearn::data {
 
 	class Persistence {
 		public:

@@ -49,8 +49,7 @@ if (PLEARN_TEST)
 		test/rep/call_graph_test.cpp
 		test/rep/forward_prop_test.cpp
 
-		test/environ/executor_test.cpp
-
+		test/backend/cpu/executor_test.cpp
 		test/backend/cpu/cpu_ops_test.cpp
 
 		test/data/persistence_test.cpp

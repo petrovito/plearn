@@ -4,7 +4,7 @@
 #include "rep/call_graph.h"
 #include "rep/forward_prop.h"
 
-using namespace plearn;
+using namespace plearn::rep;
 
 TEST(ForwardProp, Builder) {
 	call_graph_builder cg_builder;

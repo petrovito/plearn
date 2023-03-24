@@ -2,7 +2,7 @@
 
 #include <immintrin.h>
 
-namespace plearn {
+namespace plearn::backend::cpu {
 	
 	inline void _cpu_matmul(float* A, float* B,
 			float* C, int m, int n, int k) {
@@ -40,10 +40,18 @@ namespace plearn {
 
 
 
+	inline void _cpu_vecmatmul(float* A, float*B, float* C, int m, int n) {
+		for (int i = 0; i < m; ++i) {
+			for (int j = 0; j < n; ++j) {
+				C[j] += A[i] * B[i*n + j];
+			}
+		}
+	}
+
 	inline void _cpu_matvecmul(float* A, float*B, float* C, int m, int n) {
 		for (int i = 0; i < m; ++i) {
 			for (int l = 0; l < n; ++l) {
-					C[i] += A[i*n +l] * B[l];
+				C[i] += A[i*n +l] * B[l];
 			}
 		}
 	}
