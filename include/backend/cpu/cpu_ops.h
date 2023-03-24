@@ -1,9 +1,9 @@
 #pragma once
 
-#include "rep/call_graph.h"
+#include <rep/call_graph.h>
 
-#include "backend/cpu/cpu_types.h"
-#include "backend/cpu/cpu_op_impl.h"
+#include <backend/cpu/cpu_types.h>
+#include <backend/cpu/cpu_op_impl.h>
 
 namespace plearn::backend::cpu {
 

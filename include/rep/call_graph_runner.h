@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rep/call_graph.h"
+#include <rep/call_graph.h>
 
 namespace plearn::rep {
 

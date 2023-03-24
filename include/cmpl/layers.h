@@ -2,7 +2,7 @@
 
 #include <concepts>
 
-#include "cmpl/operation.h"
+#include <cmpl/operation.h>
 
 namespace plearn {
 

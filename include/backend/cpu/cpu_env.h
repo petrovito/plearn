@@ -1,7 +1,7 @@
 #pragma once
 
-#include "backend/cpu/cpu_types.h"
-#include "backend/cpu/cpu_ops.h"
+#include <backend/cpu/cpu_types.h>
+#include <backend/cpu/cpu_ops.h>
 
 namespace plearn::backend::cpu {
 

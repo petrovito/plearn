@@ -3,7 +3,7 @@
 #include <immintrin.h>
 #include <new>
 
-#include "backend/cpu/cpu_ops.h"
+#include <backend/cpu/cpu_ops.h>
 
 using namespace plearn::backend::cpu;
 

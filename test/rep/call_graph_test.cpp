@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "rep/call_graph.h"
-#include "rep/call_graph_runner.h"
+#include <rep/call_graph.h>
+#include <rep/call_graph_runner.h>
 
 using namespace plearn::rep;
 

@@ -10,8 +10,8 @@
 #include <queue>
 #include <vector>
 
-#include "rep/call_graph.h"
-#include "environ/env_types.h"
+#include <rep/call_graph.h>
+#include <environ/env_types.h>
 
 namespace plearn::backend::cpu {
 

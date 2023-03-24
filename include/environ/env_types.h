@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "rep/rep_types.h"
+#include <rep/rep_types.h>
 
 namespace plearn::env {
 

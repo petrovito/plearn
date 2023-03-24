@@ -7,7 +7,7 @@
 #include <ranges>
 #include <vector>
 
-#include "rep/call_graph.h"
+#include <rep/call_graph.h>
 
 namespace plearn {
 

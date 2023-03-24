@@ -2,8 +2,8 @@
 
 #include <cstdint>
 
-#include "rep/call_graph.h"
-#include "data/gen/call_graph.pb.h"
+#include <rep/call_graph.h>
+#include <data/gen/call_graph.pb.h>
 
 namespace plearn::data {
 

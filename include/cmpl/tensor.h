@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "meta_helpers.h"
+#include <cmpl/meta_helpers.h>
 
 namespace plearn {
 

@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "rep/call_graph.h"
-#include "data/persistence.h"
+#include <rep/call_graph.h>
+#include <data/persistence.h>
 
 namespace plearn::data {
 

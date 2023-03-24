@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "cmpl/layers.h"
-#include "cmpl/model.h"
+#include <cmpl/layers.h>
+#include <cmpl/model.h>
 
 using namespace plearn;
 
