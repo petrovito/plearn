@@ -49,7 +49,8 @@ if (PLEARN_TEST)
 		test/executor_test.cpp
 		test/cpu_ops_test.cpp
 		test/persistence_test.cpp
+		test/forward_prop_test.cpp
 		)
 	target_link_libraries(unit_test PRIVATE CONAN_PKG::gtest plearn_core)
-	# gtest_discover_tests(unit_test)
+	gtest_discover_tests(unit_test)
 endif()

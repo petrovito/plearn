@@ -177,6 +177,10 @@ namespace plearn {
 
 			env_state state() const { return state_; }
 
+			const tensor& tensor_at(node_id id) const {
+				return tensor_nodes_.at(id).tensor_.meta_data();
+			}
+
 		private:
 			//returns true IFF op_node just become ready as a result of this dep
 			bool set_dep_ready(cpu_op_node* opn, const cpu_tensor_node* inn) {

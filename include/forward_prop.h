@@ -16,102 +16,168 @@
 namespace plearn {
 
 
-	/**
-	 * A gradient tensor of tensor WRT. an input tensor.
-	 * (For some underlying function)
-	 * Identity and independentness (null-tensor) are not stored as a cpu_tensor, but
-	 * just a boolean field.
-	 */
-	struct cpu_gradient {
-		cpu_gradient(bool identity) : 
-			grad_{}, identity_(identity), independent_(false) {};
-		cpu_gradient(bool identity, bool independent) :
-			grad_{}, identity_(identity), independent_(independent) {};
-		cpu_tensor grad_;
-		bool identity_;
-		bool independent_;
+
+	struct gradient {
+		//TODO maybe size infos?
+		bool identity_{false};
+		bool independent_{false};
 	};
 
-	const cpu_gradient independent_gradient = cpu_gradient(false, true);
+	const gradient identity_gradient = gradient{true, false};
+	const gradient independent_gradient = gradient{false, true};
 
-
-	/**
-	 * A derivative system is a set of gradients for a given tensor.
-	 * The gradients are indexed by the tensor id of the input tensor.
-	 * The gradients are stored in a hash map.
-	 */
-	struct cpu_derivative_system {
-		cpu_derivative_system() : grads{} {};
+	struct op_derivative {
+		op_derivative() = default;
+		op_derivative(const op_node& op_node, const vector<node_id>& vars) :
+			op_node_{op_node} {
+				for	(auto varn_id: vars) {
+					indirect_grads_[varn_id] = independent_gradient;
+				}
+			};
 		
-		static cpu_derivative_system identity(tensor_id id) {
-			cpu_derivative_system d;
-			d.grads.insert({id, cpu_gradient(true)});
+		static op_derivative identity(tensor_node_id tenn_id, const vector<node_id>& vars) {
+			op_derivative d{op_node::identity(tenn_id), vars};
+			d.direct_grads_[tenn_id] = identity_gradient;
+			d.indirect_grads_[tenn_id] = identity_gradient;
+			return d;
+		}
+		static op_derivative independent(tensor_node_id tenn_id, const vector<node_id>& vars) {
+			op_node noopn{-1, noop{}, {}, tenn_id};
+			op_derivative d{noopn, vars};
 			return d;
 		}
 
-		const cpu_gradient& operator[](tensor_id id) {
-			if (grads.contains(id)) return grads[id];
-			return independent_gradient;
+		/* const gradient& operator[](node_id id) const { */
+		/* 	if (direct_grads_.contains(id)) return direct_grads_.at(id); */
+		/* 	return independent_gradient; */
+		/* } */
+
+		bool depends_on(node_id id) const {
+			/* if (!indirect_grads_.contains(id)) return false; */
+			return !indirect_grads_.at(id).independent_;
 		}
 
-		hash_map<tensor_id, cpu_gradient> grads;
+		bool depends_on_any() const { //any variable node, that is
+			for (auto& [id, grad]: indirect_grads_) {
+				if (!grad.independent_) return true;
+			}
+			return false;
+		}
+
+		unordered_set<node_id> variable_dependencies() const {
+			unordered_set<node_id> deps{};
+			for (auto& [id, grad]: indirect_grads_) {
+				if (!grad.independent_) deps.insert(id);
+			}
+			return deps;
+		}
+
+		op_node op_node_;//TODO should be reference, except identity is problematic
+		hash_map<node_id, gradient> direct_grads_{}; //calculated from op and input tensor values
+		hash_map<node_id, gradient> indirect_grads_{}; //calculated from direct_grads_
 	};
 
 
-	class cpu_forward_prop_diff {
+	class forward_prop_diff {
 
 		public:
-			cpu_forward_prop_diff() :
-				data_tensors_{}, derivatives_{}
-		{};
+			forward_prop_diff(
+					vector<node_id>&& variable_nodes,
+					hash_map<node_id, op_derivative>&& derivatives
+					) :
+				variable_nodes_{std::move(variable_nodes)},
+				derivatives_{std::move(derivatives)} {} ;
 
+			//getters
+			const vector<node_id>& variable_nodes() const { return variable_nodes_; }
+			const hash_map<node_id, op_derivative>& derivatives() const { return derivatives_; }
 		private:
-			vector<tensor> data_tensors_;
-			hash_map<tensor_id, cpu_derivative_system> derivatives_;
-			friend class cpu_forward_prop_diff_builder;
-
-
+			vector<node_id> variable_nodes_;
+			hash_map<node_id, op_derivative> derivatives_;
 	};
 	
 
-	class cpu_forward_prop_diff_builder {
+	class forward_prop_diff_builder {
 
 		public:
-			cpu_forward_prop_diff_builder(const call_graph& graph) :
-				diff_env_{std::make_unique<cpu_forward_prop_diff>()},
+			forward_prop_diff_builder(const call_graph& graph) :
 				graph_{graph} { }
 			
 			/**
-			 * The nodes for which the derivatives will be computed.
+			 * The variable tensors of the system.
+			 * I.e. calculate the derivatives WRT these tensors.
 			 */
-			void data_nodes(const vector<tensor>& data_nodes) {
-				data_tensors_ = data_nodes;
-				diff_env_->data_tensors_ = data_nodes;
+			forward_prop_diff_builder& variable_nodes(const vector<node_id>& data_nodes) {
+				variable_nodes_ = data_nodes;
+				return *this;
+			}
+
+			/**
+			 * Set all data nodes to be variable nodes.
+			 */
+			forward_prop_diff_builder& all_data_nodes() {
+				for (auto& [id, node]: graph_.data_nodes_) {
+					variable_nodes_.push_back(id);
+				}
+				return *this;
 			}
 
 			/**
 			 * Find the nodes that are dependant on the requested data nodes.
 			 */
-			void find_dependant_nodes() {
-				if (data_tensors_.empty() || !dependant_nodes_.empty()) return;
-				for (auto& data_tensor: data_tensors_) {
-					derivatives_.insert({data_tensor.id(),
-							cpu_derivative_system::identity(data_tensor.id())});
+			forward_prop_diff_builder& find_depending_tensors() {
+				if (variable_nodes_.empty()) {
+					//set variables to be all data nodes
+					all_data_nodes();
 				}
-
+				//add identity derivatives for the data tensors
+				for (auto var_node_id: variable_nodes_) {
+					derivatives_[var_node_id] =
+							op_derivative::identity(var_node_id, variable_nodes_);
+				}
+				//set independent derivatives for all input nodes
+				for (auto inn_id: graph_.in_nodes_) {
+					derivatives_[inn_id] = op_derivative::independent(inn_id, variable_nodes_);
+				}
+				//find derivatives for all flow node-tensors
+				call_graph_runner runner{graph_};
+				auto& ready_ops = runner.ready_ops();
+				runner.reset();
+				while (runner.state() == env_state::IN_PROGRESS) {
+					//select ready op node and its output
+					auto opn_id = *ready_ops.begin();
+					auto& opn = graph_.op_nodes_.at(opn_id);
+					//iterate over inputs and find dependant variable tensors for output
+					//recursively
+					op_derivative out_diffs{opn, variable_nodes_};
+					for (auto inn_id: opn.inputs_) {
+						auto& in_diffs = derivatives_.at(inn_id);
+						//set dependencies
+						for (auto varn_id: variable_nodes_) {
+							if (in_diffs.depends_on(varn_id)) {
+								out_diffs.indirect_grads_[varn_id].independent_ = false;
+							}
+						}
+					}
+					//add op diff and mark op as finished
+					derivatives_[opn.out_] = out_diffs;
+					runner.op_finished(opn_id);
+				}
+				return *this;
 			}
 
-			unique_ptr<cpu_forward_prop_diff> build() {
-				return std::move(diff_env_);
+			unique_ptr<forward_prop_diff> build() {
+				return make_unique<forward_prop_diff>(
+						std::move(variable_nodes_),
+						std::move(derivatives_)
+						);
 			}
 
 
 		private:
-			unique_ptr<cpu_forward_prop_diff> diff_env_;
 			const call_graph& graph_;
-			vector<tensor> data_tensors_;
-			vector<tensor_id> dependant_nodes_;
-			hash_map<tensor_id, cpu_derivative_system> derivatives_;
+			vector<node_id> variable_nodes_;
+			hash_map<node_id, op_derivative> derivatives_;
 	};
 	
 }

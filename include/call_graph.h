@@ -72,6 +72,7 @@ namespace plearn {
 
 	enum class op_type {
 		noop,
+		identity,
 		matmul,
 		matvecmul,
 		add,
@@ -95,15 +96,22 @@ namespace plearn {
 		matvecmul() : operation{op_type::matvecmul} {}
 	};
 
+	struct add : public operation {
+		add() : operation{op_type::add} {}
+	};
+
+
 
 
 	using node_id = int;
 	using op_node_id = node_id;
+	using tensor_node_id = node_id;
 
 	struct tensor_node {
 		node_id id_;
 		shape_t shape_;
 		vector<node_id> outputs_{};
+		
 
 		friend auto operator<=>(const tensor_node&, const tensor_node&) = default;
 	};
@@ -114,6 +122,10 @@ namespace plearn {
 
 		vector<node_id> inputs_; //dependencies
 		node_id out_{};
+
+		static op_node identity(tensor_node_id id) { 
+			return {-1, {op_type::identity}, {id}, id};
+		}  
 
 		friend auto operator<=>(const op_node&, const op_node&) = default;
 	};
@@ -251,6 +263,7 @@ namespace plearn {
 
 			/**
 			 * Call this function when an operation has finished executing.
+			 * Updates dependency counters and available operations.
 			 */
 			void op_finished(op_node_id op) {
 				//TODO concurrency
