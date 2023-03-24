@@ -1,8 +1,9 @@
 #pragma once
 
-#include "gen/call_graph.pb.h"
-#include "call_graph.h"
 #include <cstdint>
+
+#include "gen/call_graph.pb.h"
+#include "rep/call_graph.h"
 
 namespace plearn {
 

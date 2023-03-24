@@ -1,6 +1,7 @@
 #include <iostream>
-#include <operation.h>
 #include <gtest/gtest.h>
+
+#include "cmpl/operation.h"
 
 using namespace plearn;
 

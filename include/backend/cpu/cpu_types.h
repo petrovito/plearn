@@ -2,13 +2,15 @@
 
 #include <algorithm>
 #include <bits/ranges_util.h>
-#include "call_graph.h"
 #include <cassert>
 #include <cstdint>
+#include <memory>
 #include <unordered_set>
 #include <ranges>
 #include <queue>
 #include <vector>
+
+#include "rep/call_graph.h"
 
 namespace plearn {
 

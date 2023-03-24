@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
-#include "call_graph_test_helper.h"
-#include "persistence.h"
-#include <call_graph.h>
 #include <string>
 
+#include "../rep/call_graph_test_helper.h"
+
+#include "data/persistence.h"
+#include "rep/call_graph.h"
 
 namespace plearn {
 

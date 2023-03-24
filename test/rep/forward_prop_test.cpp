@@ -1,7 +1,8 @@
-#include "call_graph.h"
-#include <forward_prop.h>
 #include <gtest/gtest.h>
 #include <unordered_set>
+
+#include "rep/call_graph.h"
+#include "rep/forward_prop.h"
 
 using namespace plearn;
 

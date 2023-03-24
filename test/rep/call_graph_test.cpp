@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include <call_graph.h>
+
+#include "rep/call_graph.h"
 
 using namespace plearn;
 

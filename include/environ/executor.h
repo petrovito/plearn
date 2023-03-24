@@ -4,13 +4,12 @@
 #include <bits/ranges_algo.h>
 #include <cstdint>
 #include <memory>
-#include "operation.h"
 #include <ranges>
 #include <vector>
 
-#include "cpu_types.h"
-#include "cpu_ops.h"
-#include "call_graph.h"
+#include "rep/call_graph.h"
+#include "backend/cpu/cpu_types.h"
+#include "backend/cpu/cpu_ops.h"
 
 namespace plearn {
 

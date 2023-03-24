@@ -27,7 +27,7 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 add_library(plearn_msg STATIC
-	include/gen/call_graph.pb.cc
+	include/data/gen/call_graph.pb.cc
 	)
 target_link_libraries(plearn_msg PUBLIC CONAN_PKG::protobuf)
 
@@ -43,13 +43,17 @@ if (PLEARN_TEST)
 	enable_testing()
 	include(GoogleTest)
 	add_executable(unit_test 
-		test/basic_test.cpp
-		test/layer_test.cpp
-		test/call_graph_test.cpp
-		test/executor_test.cpp
-		test/cpu_ops_test.cpp
-		test/persistence_test.cpp
-		test/forward_prop_test.cpp
+		test/cmpl/basic_test.cpp
+		test/cmpl/layer_test.cpp
+
+		test/rep/call_graph_test.cpp
+		test/rep/forward_prop_test.cpp
+
+		test/environ/executor_test.cpp
+
+		test/backend/cpu/cpu_ops_test.cpp
+
+		test/data/persistence_test.cpp
 		)
 	target_link_libraries(unit_test PRIVATE CONAN_PKG::gtest plearn_core)
 	gtest_discover_tests(unit_test)

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "cpu_types.h"
-#include "call_graph.h"
+#include "rep/call_graph.h"
+
+#include "backend/cpu/cpu_types.h"
 #include "cpu_op_impl.h"
 
 namespace plearn {

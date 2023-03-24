@@ -1,8 +1,9 @@
-#include "call_graph_test_helper.h"
-#include "cpu_types.h"
-#include "executor.h"
 #include <gtest/gtest.h>
-#include <call_graph.h>
+
+#include "rep/call_graph.h"
+#include "../rep/call_graph_test_helper.h"
+#include "backend/cpu/cpu_types.h"
+#include "environ/executor.h"
 
 namespace plearn {
 

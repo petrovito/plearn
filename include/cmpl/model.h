@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tensor.h"
-#include <layers.h>
+#include "cmpl/tensor.h"
+#include "cmpl/layers.h"
 
 namespace plearn {
 

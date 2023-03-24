@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <cpu_ops.h>
 #include <immintrin.h>
 #include <new>
+
+#include "backend/cpu/cpu_ops.h"
 
 using namespace plearn;
 
