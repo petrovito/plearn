@@ -1,3 +1,4 @@
+#include "call_graph.h"
 #include <forward_prop.h>
 #include <gtest/gtest.h>
 #include <unordered_set>
@@ -44,15 +45,35 @@ TEST(ForwardProp, Builder) {
 	// data nodes only depend on themselves
 	unordered_set<node_id> data1n_deps = {data1n_id};
 	ASSERT_EQ(diffs[data1n_id].variable_dependencies(), data1n_deps);
+	unordered_set<node_id> data1n_direct_deps = {data1n_id};
+	ASSERT_EQ(diffs[data1n_id].direct_grads_.size(), data1n_direct_deps.size());
+	for (auto nid: data1n_direct_deps) {
+		ASSERT_TRUE(diffs[data1n_id].direct_grads_.contains(nid));
+	}
 	unordered_set<node_id> data2n_deps = {data2n_id};
 	ASSERT_EQ(diffs[data2n_id].variable_dependencies(), data2n_deps);
+	unordered_set<node_id> data2n_direct_deps = {data2n_id};
+	ASSERT_EQ(diffs[data2n_id].direct_grads_.size(), data2n_direct_deps.size());
+	for (auto nid: data2n_direct_deps) {
+		ASSERT_TRUE(diffs[data2n_id].direct_grads_.contains(nid));
+	}
 
 	// the flow tensor depends on the first data tensor
 	unordered_set<node_id> flown_deps = {data1n_id};
 	ASSERT_EQ(diffs[flown_id].variable_dependencies(), flown_deps);
+	unordered_set<node_id> flown_direct_deps = {inn_id, data1n_id};
+	ASSERT_EQ(diffs[flown_id].direct_grads_.size(), flown_direct_deps.size());
+	for (auto nid: flown_direct_deps) {
+		ASSERT_TRUE(diffs[flown_id].direct_grads_.contains(nid));
+	}
 
 	// the output tensor depends on both data tensors
 	unordered_set<node_id> outn_deps = {data1n_id, data2n_id};
 	ASSERT_EQ(diffs[outn_id].variable_dependencies(), outn_deps);
+	unordered_set<node_id> outn_direct_deps = {flown_id, data2n_id};
+	ASSERT_EQ(diffs[outn_id].direct_grads_.size(), outn_direct_deps.size());
+	for (auto nid: outn_direct_deps) {
+		ASSERT_TRUE(diffs[outn_id].direct_grads_.contains(nid));
+	}
 }
 

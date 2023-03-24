@@ -151,6 +151,7 @@ namespace plearn {
 					//recursively
 					op_derivative out_diffs{opn, variable_nodes_};
 					for (auto inn_id: opn.inputs_) {
+						out_diffs.direct_grads_[inn_id] = {};
 						auto& in_diffs = derivatives_.at(inn_id);
 						//set dependencies
 						for (auto varn_id: variable_nodes_) {
