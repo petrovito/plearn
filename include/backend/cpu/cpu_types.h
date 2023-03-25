@@ -24,15 +24,6 @@ namespace plearn::backend::cpu {
 	using std::unordered_set;
 	using std::ranges::find_if;
 
-	template<typename T>
-	using read_ptr = const T*;
-
-	template<typename T>
-	using borrowed_ptr = T*;
-
-	template<typename T>
-	using owned_ptr = T*;
-
 
 	struct tensor_buf {
 		float* buf;
@@ -47,11 +38,11 @@ namespace plearn::backend::cpu {
 	class cpu_tensor {
 		public:
 			cpu_tensor() = default;
-			cpu_tensor(const tensor& tens, const shared_ptr<tensor_buf>& buf) :
+			cpu_tensor(const tensor_t& tens, const shared_ptr<tensor_buf>& buf) :
 				meta_data_{tens}, content_{buf} {}
 
 			borrowed_ptr<tensor_buf> get_content() const { return content_.get(); }
-			const tensor& meta_data() const { return meta_data_; }
+			const tensor_t& meta_data() const { return meta_data_; }
 
 			/**
 			 *  Zero out tensor content.
@@ -59,7 +50,7 @@ namespace plearn::backend::cpu {
 			void zero() { std::fill_n(content_->buf, meta_data_.shape().size(), 0); }
 
 		private:
-			tensor meta_data_;
+			tensor_t meta_data_;
 			shared_ptr<tensor_buf> content_;
 
 		friend class cpu_tensor_factory;
@@ -72,7 +63,7 @@ namespace plearn::backend::cpu {
 				return allocate(tensor_factory::create(shape));
 			}
 
-			static cpu_tensor allocate(const tensor& tens) {
+			static cpu_tensor allocate(const tensor_t& tens) {
 				auto buf = std::make_shared<tensor_buf>(tens.shape().size());
 				return cpu_tensor(tens, buf);
 			}

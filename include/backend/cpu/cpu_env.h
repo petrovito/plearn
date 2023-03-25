@@ -108,7 +108,7 @@ namespace plearn::backend::cpu {
 
 			run_state state() const { return state_; }
 
-			const tensor& tensor_at(node_id id) const {
+			const tensor_t& tensor_at(node_id id) const {
 				return tensor_nodes_.at(id).tensor_.meta_data();
 			}
 
@@ -195,7 +195,7 @@ namespace plearn::backend::cpu {
 				//TODO except for input nodes
 				for (auto flown_id: flow_nodes_) {
 					auto& flow_n = env_->tensor_nodes_[flown_id];
-					tensor tens = tensor_factory::create(flow_n.shape_);
+					tensor_t tens = tensor_factory::create(flow_n.shape_);
 					flow_n.tensor_ = cpu_tensor_factory::allocate(tens);				} 
 				return *this;
 			}

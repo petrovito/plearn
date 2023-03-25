@@ -2,8 +2,6 @@
 
 #include <rep/call_graph.h>
 #include <rep/rep_types.h>
-#include <environ/executor.h>
-#include <environ/env_types.h>
 #include <backend/cpu/cpu_env.h>
 #include <backend/cpu/cpu_types.h>
 

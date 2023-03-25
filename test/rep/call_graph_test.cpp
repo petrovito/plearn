@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <rep/rep_types.h>
 #include <rep/call_graph.h>
 #include <rep/call_graph_runner.h>
 

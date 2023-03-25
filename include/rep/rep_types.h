@@ -23,6 +23,18 @@ namespace plearn::rep {
 
 
 
+	template<typename T>
+	using read_ptr = const T*;
+
+	template<typename T>
+	using borrowed_ptr = T*;
+
+	template<typename T>
+	using owned_ptr = T*;
+
+
+
+
 
 	struct shape_t {
 		int rank;
