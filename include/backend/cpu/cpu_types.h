@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rep/rep_types.h"
 #include <algorithm>
 #include <bits/ranges_util.h>
 #include <cassert>
@@ -35,22 +36,21 @@ namespace plearn::backend::cpu {
 	};
 
 
-	class cpu_tensor {
+	class cpu_tensor : public tensor_back_t {
 		public:
-			cpu_tensor() = default;
-			cpu_tensor(const tensor_t& tens, const shared_ptr<tensor_buf>& buf) :
-				meta_data_{tens}, content_{buf} {}
-
 			borrowed_ptr<tensor_buf> get_content() const { return content_.get(); }
-			const tensor_t& meta_data() const { return meta_data_; }
+			const shape_t& shape() const { return shape_; }
 
 			/**
 			 *  Zero out tensor content.
 			 */
-			void zero() { std::fill_n(content_->buf, meta_data_.shape().size(), 0); }
+			void zero() { std::fill_n(content_->buf, shape_.size(), 0); }
 
 		private:
-			tensor_t meta_data_;
+			cpu_tensor(shape_t shape, const shared_ptr<tensor_buf>& buf) :
+				shape_{shape}, content_{buf} {}
+
+			shape_t shape_;
 			shared_ptr<tensor_buf> content_;
 
 		friend class cpu_tensor_factory;
@@ -60,12 +60,8 @@ namespace plearn::backend::cpu {
 	class cpu_tensor_factory {
 		public:
 			static cpu_tensor allocate(const shape_t& shape) {
-				return allocate(tensor_factory::create(shape));
-			}
-
-			static cpu_tensor allocate(const tensor_t& tens) {
-				auto buf = std::make_shared<tensor_buf>(tens.shape().size());
-				return cpu_tensor(tens, buf);
+				auto buf = std::make_shared<tensor_buf>(shape.size());
+				return cpu_tensor(shape, buf);
 			}
 	};
 

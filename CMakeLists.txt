@@ -51,7 +51,6 @@ if (PLEARN_TEST)
 
 		test/environ/exec_env_test.cpp
 
-		test/backend/cpu/executor_test.cpp
 		test/backend/cpu/cpu_ops_test.cpp
 
 		test/data/persistence_test.cpp
