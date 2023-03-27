@@ -52,11 +52,11 @@ namespace plearn::env {
 
 
 	struct exec_params {
-		vector<tensor_p> inputs;
+		vector<tensor_p> inputs_;
 	};
 
 	struct exec_result {
-		vector<tensor_p> outputs;
+		vector<tensor_p> outputs_;
 	};
 
 

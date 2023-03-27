@@ -8,13 +8,15 @@
 
 namespace plearn::env {
 
+	using ::testing::_;
+
 
 class MockBackend : public backend_t {
 	public:
 		MOCK_METHOD(void, exec_op,
-				(const operation& op, 
-				 const vector<tensor_p>& inputs, tensor_p output), (override));
-		unique_ptr<tensor_back_t> create_tensor(const shape_t& s) override {
+				(const operation& op, const vector<tensor_p>& inputs, tensor_p output)
+				, (override));
+		unique_ptr<tensor_back_t> create_tensor(const shape_t&) override {
 			return std::unique_ptr<tensor_back_t>(nullptr);
 		}
 };
@@ -24,7 +26,8 @@ class MockExecEnv : public exec_env {
 		/* MOCK_METHOD(tensor_t, create_tensor, */
 		/* 		(const shape_t& s), (override)); */
 		tensor_p create_tensor(const shape_t& s) override {
-			return tens_fac_.create(s, backend_->create_tensor(s));
+			auto back_tensor = std::unique_ptr<tensor_back_t>(nullptr);
+			return tens_fac_.create(s, std::move(back_tensor));
 		}
 };
 
@@ -35,6 +38,7 @@ TEST(EnvSection, Build) {
 
 
 TEST(EnvSection, Execute) {
+
 	call_graph_builder cg_builder;
 
 	auto inn_id = cg_builder.add_input_node(shape_t{768});
@@ -51,17 +55,19 @@ TEST(EnvSection, Execute) {
 
 	unique_ptr<MockBackend> mock_backend = std::make_unique<MockBackend>();
 	unique_ptr<MockExecEnv> mock_env = std::make_unique<MockExecEnv>();
-	env_section section{mock_env.get()};
+	env_section section{mock_env.get(), cg};
 	section.backend_ = mock_backend.get();
 	for (auto& [id, node]: cg.data_nodes_) {
-		section.tensors_[id] = mock_env->create_tensor(node.shape_);
+		section.data_tensors_[id] = mock_env->create_tensor(node.shape_);
 	}
 
 
 	tensor_p in_tensor = mock_env->create_tensor(shape_t{768});
-	auto result = section.execute({{in_tensor}});
-	auto& out_tensors = result.outputs;
 
+	EXPECT_CALL(*mock_backend, exec_op(_, _, _)).Times(2);
+	auto result = section.execute({{in_tensor}});
+
+	auto& out_tensors = result.outputs_;
 	ASSERT_EQ(out_tensors.size(), 1);
 	ASSERT_EQ(out_tensors[0]->shape(), shape_t{10});
 

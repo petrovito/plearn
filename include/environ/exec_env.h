@@ -11,7 +11,6 @@
 #include <rep/call_graph.h>
 #include <rep/forward_prop.h>
 #include <environ/env_types.h>
-#include <environ/env_section.h>
 
 namespace plearn::env {
 
@@ -23,8 +22,6 @@ namespace plearn::env {
 	class exec_env {
 		public:
 			const backend_t& backend() const { return *backend_; }
-
-			env_section create_section() { return env_section{this}; }
 
 			virtual tensor_p create_tensor(const shape_t& s) {
 				auto ten_b = backend_->create_tensor(s);
