@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cassert>
+#include <concepts>
+
 #include <rep/call_graph.h>
 
 namespace plearn::rep {
@@ -30,19 +33,33 @@ namespace plearn::rep {
 				}
 			}
 
+			template<typename Callable>
+			void run(Callable&& op_action)
+					requires std::invocable<Callable, const op_node&>
+			{
+				assert(state_ == run_state::READY);
+				reset();
+				while (state_ == run_state::IN_PROGRESS) {
+					auto& opn_id = *ready_ops_.begin();
+					auto& opn = cg_.op_nodes_.at(opn_id);
+					op_action(opn);
+					op_finished(opn_id);
+				}
+			}
+
 			/**
 			 * Start a run: reset dependency counters and available operations.
 			 */
 			void reset() {
 				state_ = run_state::IN_PROGRESS;
-				unready_out_tens_ = cg_.out_nodes_.size();
+				unready_out_tens_ = cg_.output_nodes_.size();
 				//reset dependency counters
 				for (auto& [id, op]: cg_.op_nodes_) {
 					op_info_[id].unready_deps_ = op_info_[id].deps_;
 				}
 				//clear ready ops and find initial ready ops
 				ready_ops_ = unordered_set<op_node_id>{};
-				for (auto inn_id: cg_.in_nodes_) {
+				for (auto& [inn_id, inn]: cg_.input_nodes_) {
 					for (auto op_id: cg_.flow_nodes_.at(inn_id).outputs_) {
 						decrement_deps(op_info_.at(op_id));
 					}
@@ -63,7 +80,7 @@ namespace plearn::rep {
 					decrement_deps(op_info_.at(op_id));
 				}
 				//check if op out tensor is a graph output
-				if (std::count(cg_.out_nodes_.begin(), cg_.out_nodes_.end(), out_tensn_id) > 0) {
+				if (cg_.output_nodes_.contains(out_tensn_id)) {
 					unready_out_tens_--;
 					if (unready_out_tens_ == 0) {
 						state_ = run_state::READY;
