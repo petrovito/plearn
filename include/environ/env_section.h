@@ -18,6 +18,38 @@
 namespace plearn::env {
 
 	/**
+	 * The class responsible ONLY for executing a call graph.
+	 * Has all the resources required provided by some other component.
+	 */
+	class section_executor {
+		public:
+			section_executor(const call_graph& cg, const borrowed_ptr<backend_t> backend, 
+					hash_map<node_id, tensor_p>& tensors) :
+				cg_{cg}, backend_{backend}, tensors_{tensors} {}
+
+			exec_result execute() {
+				call_graph_runner runner{cg_};
+				runner.run([this] (const op_node& opn) {
+					auto& op = opn.op_;
+					vector<tensor_p> inputs(opn.inputs_.size());
+					std::transform(opn.inputs_.begin(), opn.inputs_.end(), 
+							inputs.begin(), [this](auto id) { return tensors_[id]; });
+					tensor_p output = tensors_[opn.out_];
+					backend_->exec_op(op, inputs, output);
+				});
+
+				vector<tensor_p> outputs(cg_.out_nodes_.size());
+				std::transform(cg_.out_nodes_.begin(), cg_.out_nodes_.end(), 
+						outputs.begin(), [this](auto id) { return tensors_[id]; });
+				return exec_result{outputs};
+			}
+		private:
+			const call_graph& cg_;
+			const borrowed_ptr<backend_t> backend_;
+			hash_map<node_id, tensor_p>& tensors_;
+	};
+
+	/**
 	 * A section contains a set of representations and necessary run time variables
 	 * required to execute a call graph, and calculate derivatives.
 	 *
@@ -27,10 +59,6 @@ namespace plearn::env {
 		public:
 			exec_result execute(const exec_params& params) {
 				//prepare run
-				call_graph_runner runner{cg_};
-				assert(runner.state() == run_state::READY);
-				runner.reset();
-				auto& ready_op_ids = runner.ready_ops();
 				tensors_ = data_tensors_;
 				//add flow tensors and input tensors TODO also output??
 				for (auto& [id, node]: cg_.flow_nodes_) {
@@ -40,23 +68,11 @@ namespace plearn::env {
 					tensors_[id] = params.inputs_[id];
 				}
 				
-				//start RUN
-				while (runner.state() == run_state::IN_PROGRESS) {
-					auto& opn_id = *ready_op_ids.begin();
-					auto& op_node = cg_.op_nodes_.at(opn_id);
-					auto& op = op_node.op_;
+				//start run
+				section_executor exec{cg_, backend_, tensors_};
+				exec_result res = exec.execute();
 
-					vector<tensor_p> inputs(op_node.inputs_.size());
-					std::transform(op_node.inputs_.begin(), op_node.inputs_.end(), 
-							inputs.begin(), [this](auto id) { return tensors_[id]; });
-					tensor_p output = tensors_[op_node.out_];
-					backend_->exec_op(op, inputs, output);
-					runner.op_finished(opn_id);
-				}
-				vector<tensor_p> outputs(cg_.out_nodes_.size());
-				std::transform(cg_.out_nodes_.begin(), cg_.out_nodes_.end(), 
-						outputs.begin(), [this](auto id) { return tensors_[id]; });
-				return exec_result{outputs};
+				return res;
 			}
 			
 

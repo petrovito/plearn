@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <rep/call_graph.h>
 
 namespace plearn::rep {
@@ -30,10 +31,27 @@ namespace plearn::rep {
 				}
 			}
 
+			template<typename Callable>
+				void run(Callable&& op_action)
+				requires std::invocable<Callable, const op_node&>
+				{
+					reset();
+					while (state_ == run_state::IN_PROGRESS) {
+						auto& opn_id = *ready_ops_.begin();
+						auto& opn = cg_.op_nodes_.at(opn_id);
+						op_action(opn);
+						op_finished(opn_id);
+					}
+				}
+
+
+
+
 			/**
 			 * Start a run: reset dependency counters and available operations.
 			 */
 			void reset() {
+				assert(state_ == run_state::READY);
 				state_ = run_state::IN_PROGRESS;
 				unready_out_tens_ = cg_.out_nodes_.size();
 				//reset dependency counters
@@ -54,6 +72,7 @@ namespace plearn::rep {
 			 * Updates dependency counters and available operations.
 			 */
 			void op_finished(op_node_id op) {
+				assert(state_ == run_state::IN_PROGRESS);
 				//TODO concurrency
 				//remove op from ready ops
 				ready_ops_.erase(op);

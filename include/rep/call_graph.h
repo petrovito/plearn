@@ -30,7 +30,16 @@ namespace plearn::rep {
 
 	class call_graph {
 		public:
+			/**
+			 * flow_nodes are the union of input, output and internal nodes
+			 * Where data flows through the graph.
+			 */
 			hash_map<node_id, tensor_node> flow_nodes_;
+			/**
+			 * Data nodes are the "parameters of the graph", the ones that are not
+			 * influenced by the data flowing through the graph.
+			 * AKA the trainable parameters.
+			 */
 			hash_map<node_id, tensor_node> data_nodes_;
 			hash_map<node_id, op_node> op_nodes_;
 
