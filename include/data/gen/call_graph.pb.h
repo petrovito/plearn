@@ -1006,6 +1006,7 @@ class CallGraphM PROTOBUF_FINAL :
     kDataNodesFieldNumber = 3,
     kInNodesFieldNumber = 4,
     kOutNodesFieldNumber = 5,
+    kInternalNodesFieldNumber = 6,
   };
   // map<int32, .plearn.OpNodeM> opNodes = 1;
   int opnodes_size() const;
@@ -1102,6 +1103,28 @@ class CallGraphM PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
       mutable_outnodes();
 
+  // repeated int32 internalNodes = 6;
+  int internalnodes_size() const;
+  private:
+  int _internal_internalnodes_size() const;
+  public:
+  void clear_internalnodes();
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_internalnodes(int index) const;
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
+      _internal_internalnodes() const;
+  void _internal_add_internalnodes(::PROTOBUF_NAMESPACE_ID::int32 value);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
+      _internal_mutable_internalnodes();
+  public:
+  ::PROTOBUF_NAMESPACE_ID::int32 internalnodes(int index) const;
+  void set_internalnodes(int index, ::PROTOBUF_NAMESPACE_ID::int32 value);
+  void add_internalnodes(::PROTOBUF_NAMESPACE_ID::int32 value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
+      internalnodes() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
+      mutable_internalnodes();
+
   // @@protoc_insertion_point(class_scope:plearn.CallGraphM)
  private:
   class _Internal;
@@ -1131,6 +1154,8 @@ class CallGraphM PROTOBUF_FINAL :
   mutable std::atomic<int> _innodes_cached_byte_size_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 > outnodes_;
   mutable std::atomic<int> _outnodes_cached_byte_size_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 > internalnodes_;
+  mutable std::atomic<int> _internalnodes_cached_byte_size_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_call_5fgraph_2eproto;
 };
@@ -1749,6 +1774,53 @@ inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
 CallGraphM::mutable_outnodes() {
   // @@protoc_insertion_point(field_mutable_list:plearn.CallGraphM.outNodes)
   return _internal_mutable_outnodes();
+}
+
+// repeated int32 internalNodes = 6;
+inline int CallGraphM::_internal_internalnodes_size() const {
+  return internalnodes_.size();
+}
+inline int CallGraphM::internalnodes_size() const {
+  return _internal_internalnodes_size();
+}
+inline void CallGraphM::clear_internalnodes() {
+  internalnodes_.Clear();
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 CallGraphM::_internal_internalnodes(int index) const {
+  return internalnodes_.Get(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 CallGraphM::internalnodes(int index) const {
+  // @@protoc_insertion_point(field_get:plearn.CallGraphM.internalNodes)
+  return _internal_internalnodes(index);
+}
+inline void CallGraphM::set_internalnodes(int index, ::PROTOBUF_NAMESPACE_ID::int32 value) {
+  internalnodes_.Set(index, value);
+  // @@protoc_insertion_point(field_set:plearn.CallGraphM.internalNodes)
+}
+inline void CallGraphM::_internal_add_internalnodes(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  internalnodes_.Add(value);
+}
+inline void CallGraphM::add_internalnodes(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_add_internalnodes(value);
+  // @@protoc_insertion_point(field_add:plearn.CallGraphM.internalNodes)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
+CallGraphM::_internal_internalnodes() const {
+  return internalnodes_;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >&
+CallGraphM::internalnodes() const {
+  // @@protoc_insertion_point(field_list:plearn.CallGraphM.internalNodes)
+  return _internal_internalnodes();
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
+CallGraphM::_internal_mutable_internalnodes() {
+  return &internalnodes_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 >*
+CallGraphM::mutable_internalnodes() {
+  // @@protoc_insertion_point(field_mutable_list:plearn.CallGraphM.internalNodes)
+  return _internal_mutable_internalnodes();
 }
 
 #ifdef __GNUC__

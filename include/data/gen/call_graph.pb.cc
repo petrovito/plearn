@@ -244,6 +244,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_call_5fgraph_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::plearn::CallGraphM, datanodes_),
   PROTOBUF_FIELD_OFFSET(::plearn::CallGraphM, innodes_),
   PROTOBUF_FIELD_OFFSET(::plearn::CallGraphM, outnodes_),
+  PROTOBUF_FIELD_OFFSET(::plearn::CallGraphM, internalnodes_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::plearn::OperationM)},
@@ -274,19 +275,19 @@ const char descriptor_table_protodef_call_5fgraph_2eproto[] PROTOBUF_SECTION_VAR
   "eM\022\n\n\002id\030\001 \001(\005\022\036\n\002op\030\002 \001(\0132\022.plearn.Oper"
   "ationM\022\016\n\006inputs\030\003 \003(\005\022\016\n\006output\030\004 \001(\005\"I"
   "\n\013TensorNodeM\022\n\n\002id\030\001 \001(\005\022\035\n\005shape\030\002 \001(\013"
-  "2\016.plearn.ShapeM\022\017\n\007outputs\030\003 \003(\005\"\234\003\n\nCa"
+  "2\016.plearn.ShapeM\022\017\n\007outputs\030\003 \003(\005\"\263\003\n\nCa"
   "llGraphM\0220\n\007opNodes\030\001 \003(\0132\037.plearn.CallG"
   "raphM.OpNodesEntry\0224\n\tflowNodes\030\002 \003(\0132!."
   "plearn.CallGraphM.FlowNodesEntry\0224\n\tdata"
   "Nodes\030\003 \003(\0132!.plearn.CallGraphM.DataNode"
   "sEntry\022\017\n\007inNodes\030\004 \003(\005\022\020\n\010outNodes\030\005 \003("
-  "\005\032\?\n\014OpNodesEntry\022\013\n\003key\030\001 \001(\005\022\036\n\005value\030"
-  "\002 \001(\0132\017.plearn.OpNodeM:\0028\001\032E\n\016FlowNodesE"
-  "ntry\022\013\n\003key\030\001 \001(\005\022\"\n\005value\030\002 \001(\0132\023.plear"
-  "n.TensorNodeM:\0028\001\032E\n\016DataNodesEntry\022\013\n\003k"
-  "ey\030\001 \001(\005\022\"\n\005value\030\002 \001(\0132\023.plearn.TensorN"
-  "odeM:\0028\001*\037\n\007OpTypeM\022\010\n\004NOOP\020\000\022\n\n\006MATMUL\020"
-  "\001b\006proto3"
+  "\005\022\025\n\rinternalNodes\030\006 \003(\005\032\?\n\014OpNodesEntry"
+  "\022\013\n\003key\030\001 \001(\005\022\036\n\005value\030\002 \001(\0132\017.plearn.Op"
+  "NodeM:\0028\001\032E\n\016FlowNodesEntry\022\013\n\003key\030\001 \001(\005"
+  "\022\"\n\005value\030\002 \001(\0132\023.plearn.TensorNodeM:\0028\001"
+  "\032E\n\016DataNodesEntry\022\013\n\003key\030\001 \001(\005\022\"\n\005value"
+  "\030\002 \001(\0132\023.plearn.TensorNodeM:\0028\001*\037\n\007OpTyp"
+  "eM\022\010\n\004NOOP\020\000\022\n\n\006MATMUL\020\001b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_call_5fgraph_2eproto_deps[1] = {
 };
@@ -302,7 +303,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_cal
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_call_5fgraph_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_call_5fgraph_2eproto = {
-  false, false, descriptor_table_protodef_call_5fgraph_2eproto, "call_graph.proto", 729,
+  false, false, descriptor_table_protodef_call_5fgraph_2eproto, "call_graph.proto", 752,
   &descriptor_table_call_5fgraph_2eproto_once, descriptor_table_call_5fgraph_2eproto_sccs, descriptor_table_call_5fgraph_2eproto_deps, 8, 0,
   schemas, file_default_instances, TableStruct_call_5fgraph_2eproto::offsets,
   file_level_metadata_call_5fgraph_2eproto, 8, file_level_enum_descriptors_call_5fgraph_2eproto, file_level_service_descriptors_call_5fgraph_2eproto,
@@ -1424,7 +1425,8 @@ CallGraphM::CallGraphM(::PROTOBUF_NAMESPACE_ID::Arena* arena)
   flownodes_(arena),
   datanodes_(arena),
   innodes_(arena),
-  outnodes_(arena) {
+  outnodes_(arena),
+  internalnodes_(arena) {
   SharedCtor();
   RegisterArenaDtor(arena);
   // @@protoc_insertion_point(arena_constructor:plearn.CallGraphM)
@@ -1432,7 +1434,8 @@ CallGraphM::CallGraphM(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 CallGraphM::CallGraphM(const CallGraphM& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
       innodes_(from.innodes_),
-      outnodes_(from.outnodes_) {
+      outnodes_(from.outnodes_),
+      internalnodes_(from.internalnodes_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   opnodes_.MergeFrom(from.opnodes_);
   flownodes_.MergeFrom(from.flownodes_);
@@ -1480,6 +1483,7 @@ void CallGraphM::Clear() {
   datanodes_.Clear();
   innodes_.Clear();
   outnodes_.Clear();
+  internalnodes_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1544,6 +1548,16 @@ const char* CallGraphM::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID:
           CHK_(ptr);
         } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 40) {
           _internal_add_outnodes(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated int32 internalNodes = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 50)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedInt32Parser(_internal_mutable_internalnodes(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 48) {
+          _internal_add_internalnodes(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr));
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -1686,6 +1700,15 @@ failure:
     }
   }
 
+  // repeated int32 internalNodes = 6;
+  {
+    int byte_size = _internalnodes_cached_byte_size_.load(std::memory_order_relaxed);
+    if (byte_size > 0) {
+      target = stream->WriteInt32Packed(
+          6, _internal_internalnodes(), byte_size, target);
+    }
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1759,6 +1782,21 @@ size_t CallGraphM::ByteSizeLong() const {
     total_size += data_size;
   }
 
+  // repeated int32 internalNodes = 6;
+  {
+    size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      Int32Size(this->internalnodes_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+            static_cast<::PROTOBUF_NAMESPACE_ID::int32>(data_size));
+    }
+    int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(data_size);
+    _internalnodes_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
         _internal_metadata_, total_size, &_cached_size_);
@@ -1795,6 +1833,7 @@ void CallGraphM::MergeFrom(const CallGraphM& from) {
   datanodes_.MergeFrom(from.datanodes_);
   innodes_.MergeFrom(from.innodes_);
   outnodes_.MergeFrom(from.outnodes_);
+  internalnodes_.MergeFrom(from.internalnodes_);
 }
 
 void CallGraphM::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
@@ -1823,6 +1862,7 @@ void CallGraphM::InternalSwap(CallGraphM* other) {
   datanodes_.Swap(&other->datanodes_);
   innodes_.InternalSwap(&other->innodes_);
   outnodes_.InternalSwap(&other->outnodes_);
+  internalnodes_.InternalSwap(&other->internalnodes_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata CallGraphM::GetMetadata() const {

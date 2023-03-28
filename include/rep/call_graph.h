@@ -36,6 +36,7 @@ namespace plearn::rep {
 
 			vector<node_id> in_nodes_;
 			vector<node_id> out_nodes_;
+			vector<node_id> internal_nodes_;
 
 			friend bool operator==(const call_graph& a, const call_graph& b) = default;	
 	};
@@ -70,16 +71,24 @@ namespace plearn::rep {
 			}
 
 			void make_output(node_id id) {
-				out_nodes_.push_back(id);
+				//remove from internal and add to out
+				auto it = std::find(internal_nodes_.begin(), internal_nodes_.end(), id);
+				if (it != internal_nodes_.end()) {
+					internal_nodes_.erase(it);
+					out_nodes_.push_back(id);
+				} else {
+					throw std::runtime_error("node is not internal");
+				}
 			}
 
 			call_graph build() {
 				return {
-					flow_nodes_,
-					data_nodes_,
-					op_nodes_,
-					in_nodes_,
-					out_nodes_,
+					std::move(flow_nodes_),
+					std::move(data_nodes_),
+					std::move(op_nodes_),
+					std::move(in_nodes_),
+					std::move(out_nodes_),
+					std::move(internal_nodes_)
 				};
 			}
 
@@ -91,6 +100,8 @@ namespace plearn::rep {
 				tensor_nodes_[id] = &flow_nodes_[id];
 				if (is_input)
 					in_nodes_.push_back(id);
+				else 
+					internal_nodes_.push_back(id);
 				return id;
 			}
 
@@ -98,8 +109,9 @@ namespace plearn::rep {
 			hash_map<node_id, tensor_node> flow_nodes_;
 			hash_map<node_id, tensor_node> data_nodes_;
 			hash_map<node_id, op_node> op_nodes_;
-			std::vector<node_id> in_nodes_;
-			std::vector<node_id> out_nodes_;
+			vector<node_id> in_nodes_;
+			vector<node_id> out_nodes_;
+			vector<node_id> internal_nodes_;
 			node_id next_id_ = 0;
 
 	};

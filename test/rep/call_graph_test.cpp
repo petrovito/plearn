@@ -25,6 +25,8 @@ TEST(CallGraph, Builder) {
 	ASSERT_EQ(cg.in_nodes_[0], inn_id);
 	ASSERT_EQ(cg.out_nodes_.size(), 1);
 	ASSERT_EQ(cg.out_nodes_[0], outn_id);
+	ASSERT_EQ(cg.internal_nodes_.size(), 1);
+	ASSERT_EQ(cg.internal_nodes_[0], flown_id);
 	ASSERT_EQ(cg.flow_nodes_.size(), 3);
 	ASSERT_EQ(cg.data_nodes_.size(), 2);
 	ASSERT_EQ(cg.op_nodes_.size(), 2);

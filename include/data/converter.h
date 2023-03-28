@@ -140,6 +140,9 @@ namespace plearn::data {
 				for (auto outn: graph.outnodes()) {
 					cg.out_nodes_.push_back(outn);
 				}
+				for (auto internaln: graph.internalnodes()) {
+					cg.internal_nodes_.push_back(internaln);
+				}
 				return cg;
 			}
 
@@ -166,6 +169,9 @@ namespace plearn::data {
 				}
 				for (auto id: graph.out_nodes_) {
 					graph_m->add_outnodes(id);
+				}
+				for (auto id: graph.internal_nodes_) {
+					graph_m->add_internalnodes(id);
 				}
 				return graph_m;
 			}

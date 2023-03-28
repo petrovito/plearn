@@ -36,5 +36,6 @@ message CallGraphM {
 	map<int32, TensorNodeM> dataNodes = 3;
 	repeated int32 inNodes = 4;
 	repeated int32 outNodes = 5;
+	repeated int32 internalNodes = 6;
 }
 
