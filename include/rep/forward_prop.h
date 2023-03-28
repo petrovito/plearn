@@ -132,28 +132,34 @@ namespace plearn::rep {
 							op_derivative::identity(var_node_id, variable_nodes_);
 				}
 				//set independent derivatives for all input nodes
-				for (auto& [inn_id, inn]: graph_.input_nodes_) {
+				for (auto inn_id: graph_.in_nodes_) {
 					derivatives_[inn_id] = op_derivative::independent(inn_id, variable_nodes_);
 				}
 				//find derivatives for all flow node-tensors
 				call_graph_runner runner{graph_};
-				runner.run([this] (const op_node& opn) {
-						//iterate over inputs and find dependant variable tensors 
-						//for output recursively
-						op_derivative out_diffs{opn, variable_nodes_};
-						for (auto inn_id: opn.inputs_) {
+				auto& ready_ops = runner.ready_ops();
+				runner.reset();
+				while (runner.state() == run_state::IN_PROGRESS) {
+					//select ready op node and its output
+					auto opn_id = *ready_ops.begin();
+					auto& opn = graph_.op_nodes_.at(opn_id);
+					//iterate over inputs and find dependant variable tensors for output
+					//recursively
+					op_derivative out_diffs{opn, variable_nodes_};
+					for (auto inn_id: opn.inputs_) {
 						out_diffs.direct_grads_[inn_id] = {};
 						auto& in_diffs = derivatives_.at(inn_id);
 						//set dependencies
 						for (auto varn_id: variable_nodes_) {
-						if (in_diffs.depends_on(varn_id)) {
-						out_diffs.indirect_grads_[varn_id].independent_ = false;
+							if (in_diffs.depends_on(varn_id)) {
+								out_diffs.indirect_grads_[varn_id].independent_ = false;
+							}
 						}
-						}
-						}
-						//add op diff and mark op as finished
-						derivatives_[opn.out_] = out_diffs;
-					});
+					}
+					//add op diff and mark op as finished
+					derivatives_[opn.out_] = out_diffs;
+					runner.op_finished(opn_id);
+				}
 				return *this;
 			}
 

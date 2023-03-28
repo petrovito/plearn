@@ -135,10 +135,10 @@ namespace plearn::data {
 					cg.op_nodes_[id] = op_node;
 				}
 				for (auto inn: graph.innodes()) {
-					cg.input_nodes_[inn] = {.id_=inn};
+					cg.in_nodes_.push_back(inn);
 				}
 				for (auto outn: graph.outnodes()) {
-					cg.output_nodes_[outn] = {.id_=outn};
+					cg.out_nodes_.push_back(outn);
 				}
 				return cg;
 			}
@@ -161,11 +161,11 @@ namespace plearn::data {
 					(*graph_m->mutable_opnodes())[id] = *node_m;
 					delete node_m;
 				}
-				for (auto& inn: graph.input_nodes_) {
-					graph_m->add_innodes(inn.first);
+				for (auto id: graph.in_nodes_) {
+					graph_m->add_innodes(id);
 				}
-				for (auto& outn: graph.output_nodes_) {
-					graph_m->add_outnodes(outn.first);
+				for (auto id: graph.out_nodes_) {
+					graph_m->add_outnodes(id);
 				}
 				return graph_m;
 			}
