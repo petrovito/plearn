@@ -52,8 +52,11 @@ namespace plearn::env {
 
 
 	struct exec_params {
+		bool calc_diffs{false};
+
 		hash_map<node_id, tensor_p> inputs_;
 		hash_map<node_id, tensor_p> outputs_;
+		hash_map<node_id, tensor_p> diffs_;
 	};
 
 	struct exec_result {

@@ -32,15 +32,15 @@ namespace plearn::env {
 	 * Container for all the tensors that are required for call graph executions.
 	 */
 	struct section_exec_tensors {
+		template<typename... Args>
 		section_exec_tensors(
-				hash_map<node_id, tensor_p>& internal_tensors,
-				hash_map<node_id, tensor_p>& data_tensors,
-				hash_map<node_id, tensor_p>& inputs,
-				hash_map<node_id, tensor_p>& outputs) :
-			tensors_{internal_tensors} {
-				tensors_.insert(data_tensors.begin(), data_tensors.end());
-				tensors_.insert(inputs.begin(), inputs.end());
-				tensors_.insert(outputs.begin(), outputs.end());
+				hash_map<node_id, tensor_p>& tensors,
+				Args&&... other_tens
+
+				) :
+			tensors_{tensors} {
+				(tensors_.insert(other_tens.begin(), other_tens.end()), ...);
+
 			}
 		hash_map<node_id, tensor_p> tensors_;
 
@@ -81,7 +81,7 @@ namespace plearn::env {
 	/**
 	 * A section is a component that is responsible for managing resources for operations 
 	 * on a call graph, i.e. execution/differentials.
-	 * Resources are typically means memory.
+	 * Resource typically means memory.
 	 */
 	class env_section {
 		public:
@@ -89,11 +89,8 @@ namespace plearn::env {
 					const call_graph& cg,
 					const hash_map<node_id, tensor_p>& data_tensors) :  
 				cg_{cg}, env_{env}, backend_{backend}, data_tensors_{data_tensors} {
-					//allocate internal tensors
-					for (auto intn_id: cg_.internal_nodes_) {
-						auto& node = cg_.flow_nodes_.at(intn_id);
-						resources_.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
-					}
+					allocate_internal_tensors();
+					create_fp_diff();
 				}
 
 			exec_result execute(exec_params& params) {
@@ -110,6 +107,20 @@ namespace plearn::env {
 			
 
 		private:
+			void allocate_internal_tensors() {
+				for (auto intn_id: cg_.internal_nodes_) {
+					auto& node = cg_.flow_nodes_.at(intn_id);
+					resources_.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
+				}
+			}
+
+			void create_fp_diff() {
+				forward_prop_diff_builder builder{cg_};
+				fp_diff_ = builder
+					.all_data_nodes()
+					.find_depending_tensors()
+					.build();
+			}
 
 			const call_graph& cg_;
 			unique_ptr<forward_prop_diff> fp_diff_;

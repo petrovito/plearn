@@ -59,9 +59,9 @@ namespace plearn::backend::cpu {
 
 	class cpu_tensor_factory {
 		public:
-			static cpu_tensor allocate(const shape_t& shape) {
+			cpu_tensor* allocate(const shape_t& shape) {
 				auto buf = std::make_shared<tensor_buf>(shape.size());
-				return cpu_tensor(shape, buf);
+				return new cpu_tensor(shape, buf);
 			}
 	};
 

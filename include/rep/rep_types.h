@@ -61,6 +61,15 @@ namespace plearn::rep {
 		shape_t(std::integral auto...dims) : 
 			rank{sizeof...(dims)}, dims{dims...} {}
 
+		shape_t operator*(const shape_t& other) const {
+			shape_t result;
+			result.rank = rank + other.rank;
+			result.dims.reserve(result.rank);
+			result.dims.insert(result.dims.end(), dims.begin(), dims.end());
+			result.dims.insert(result.dims.end(), other.dims.begin(), other.dims.end());
+			return result;
+		}
+
 		friend auto operator<=>(const shape_t&, const shape_t&) = default;
 	};
 	

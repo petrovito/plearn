@@ -22,6 +22,15 @@ namespace plearn::rep {
 	const gradient identity_gradient = gradient{true, false};
 	const gradient independent_gradient = gradient{false, true};
 
+	/**
+	 * Describes derivatives of a tensor node.
+	 * Both direct and indirect derivatives are stored.
+	 *
+	 * Direct derivatives are the ones that are computed using the op and the input nodes for the op.
+	 *
+	 * The indirect derivatives are WRT the variables of the system. They are computed using the direct derivatives
+	 * and their indirect derivatives using the chain rule.
+	 */
 	struct op_derivative {
 		op_derivative() = default;
 		op_derivative(const op_node& op_node, const vector<node_id>& vars) :
@@ -66,6 +75,14 @@ namespace plearn::rep {
 				if (!grad.independent_) deps.insert(id);
 			}
 			return deps;
+		}
+
+		bool has_non_trivial_grads() {
+			for (auto& [id, grad]: indirect_grads_) {
+				if (!grad.identity_ && !grad.independent_)
+					return true;
+			}
+			return false;
 		}
 
 		op_node op_node_;//TODO should be reference, except identity is problematic

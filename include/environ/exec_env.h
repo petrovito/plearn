@@ -21,6 +21,8 @@ namespace plearn::env {
 	 */
 	class exec_env {
 		public:
+			exec_env(backend_t* backend) : backend_{backend} {}
+
 			const backend_t& backend() const { return *backend_; }
 
 			virtual tensor_p create_tensor(const shape_t& s) {
@@ -28,10 +30,9 @@ namespace plearn::env {
 				return tens_fac_.create(s, std::move(ten_b));
 			}
 		protected:
-			exec_env() {}
 
 			tensor_factory tens_fac_{};
-			unique_ptr<backend_t> backend_;
+			borrowed_ptr<backend_t> backend_;
 		private:
 
 			friend class EnvSection_Execute_Test;

@@ -24,18 +24,12 @@ class MockBackend : public backend_t {
 
 class MockExecEnv : public exec_env {
 	public:
-		/* MOCK_METHOD(tensor_t, create_tensor, */
-		/* 		(const shape_t& s), (override)); */
+		MockExecEnv(backend_t* backend) : exec_env(backend) {}
 		tensor_p create_tensor(const shape_t& s) override {
 			auto back_tensor = std::unique_ptr<tensor_back_t>(nullptr);
 			return tens_fac_.create(s, std::move(back_tensor));
 		}
 };
-
-
-TEST(EnvSection, Build) {
-	//TODO
-}
 
 
 TEST(EnvSection, Execute) {
@@ -55,7 +49,7 @@ TEST(EnvSection, Execute) {
 
 
 	unique_ptr<MockBackend> mock_backend = std::make_unique<MockBackend>();
-	unique_ptr<MockExecEnv> mock_env = std::make_unique<MockExecEnv>();
+	unique_ptr<MockExecEnv> mock_env = std::make_unique<MockExecEnv>(mock_backend.get());
 
 	hash_map<node_id, tensor_p> data_tensors;
 	for (auto& [id, node]: cg.data_nodes_) {

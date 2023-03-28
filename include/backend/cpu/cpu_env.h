@@ -3,6 +3,7 @@
 #include <environ/env_types.h>
 #include <backend/cpu/cpu_types.h>
 #include <backend/cpu/cpu_ops.h>
+#include <memory>
 
 namespace plearn::backend::cpu {
 
@@ -33,7 +34,12 @@ namespace plearn::backend::cpu {
 						break;
 				}
 			}
+			unique_ptr<tensor_back_t> create_tensor(const shape_t& s) override {
+				auto tens = tens_fac_.allocate(s);
+				return unique_ptr<cpu_tensor>(tens);
+			}
 		private:
+			cpu_tensor_factory tens_fac_;
 	};
 }
 
