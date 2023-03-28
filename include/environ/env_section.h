@@ -17,6 +17,36 @@
 
 namespace plearn::env {
 
+
+	/**
+	 * Holds resourcers for ONE execution of a call graph.
+	 * Resources are managed by another component.
+	 *
+	 * Resources means internal tensors, that are not provided by an external component.
+	 */
+	struct section_resources {
+		hash_map<node_id, tensor_p> internal_tensors_;
+	};
+
+	/**
+	 * Container for all the tensors that are required for call graph executions.
+	 */
+	struct section_exec_tensors {
+		section_exec_tensors(
+				hash_map<node_id, tensor_p>& internal_tensors,
+				hash_map<node_id, tensor_p>& data_tensors,
+				hash_map<node_id, tensor_p>& inputs,
+				hash_map<node_id, tensor_p>& outputs) :
+			tensors_{internal_tensors} {
+				tensors_.insert(data_tensors.begin(), data_tensors.end());
+				tensors_.insert(inputs.begin(), inputs.end());
+				tensors_.insert(outputs.begin(), outputs.end());
+			}
+		hash_map<node_id, tensor_p> tensors_;
+
+		tensor_p& operator[](node_id id) { return tensors_[id]; }
+	};
+
 	/**
 	 * The class responsible ONLY for executing a call graph.
 	 * Has all the resources required provided by some other component.
@@ -24,10 +54,10 @@ namespace plearn::env {
 	class section_executor {
 		public:
 			section_executor(const call_graph& cg, const borrowed_ptr<backend_t> backend, 
-					hash_map<node_id, tensor_p>& tensors) :
+					section_exec_tensors& tensors) : 
 				cg_{cg}, backend_{backend}, tensors_{tensors} {}
 
-			exec_result execute() {
+			void execute() {
 				call_graph_runner runner{cg_};
 				runner.run([this] (const op_node& opn) {
 					auto& op = opn.op_;
@@ -41,44 +71,45 @@ namespace plearn::env {
 				vector<tensor_p> outputs(cg_.out_nodes_.size());
 				std::transform(cg_.out_nodes_.begin(), cg_.out_nodes_.end(), 
 						outputs.begin(), [this](auto id) { return tensors_[id]; });
-				return exec_result{outputs};
 			}
 		private:
 			const call_graph& cg_;
 			const borrowed_ptr<backend_t> backend_;
-			hash_map<node_id, tensor_p>& tensors_;
+			section_exec_tensors& tensors_;
 	};
 
 	/**
-	 * A section contains a set of representations and necessary run time variables
-	 * required to execute a call graph, and calculate derivatives.
-	 *
-	 * The section belongs to an execution environment.
+	 * A section is a component that is responsible for managing resources for operations 
+	 * on a call graph, i.e. execution/differentials.
+	 * Resources are typically means memory.
 	 */
 	class env_section {
 		public:
-			exec_result execute(const exec_params& params) {
+			env_section(borrowed_ptr<exec_env> env, borrowed_ptr<backend_t> backend,
+					const call_graph& cg,
+					const hash_map<node_id, tensor_p>& data_tensors) :  
+				cg_{cg}, env_{env}, backend_{backend}, data_tensors_{data_tensors} {
+					//allocate internal tensors
+					for (auto intn_id: cg_.internal_nodes_) {
+						auto& node = cg_.flow_nodes_.at(intn_id);
+						resources_.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
+					}
+				}
+
+			exec_result execute(exec_params& params) {
 				//prepare run
-				tensors_ = data_tensors_;
-				//add flow tensors and input tensors TODO also output??
-				for (auto& [id, node]: cg_.flow_nodes_) {
-					tensors_[id] = env_->create_tensor(node.shape_);
-				}
-				for (unsigned id = 0; id < params.inputs_.size(); ++id) {
-					tensors_[id] = params.inputs_[id];
-				}
+				section_exec_tensors tensors{resources_.internal_tensors_, data_tensors_,
+					params.inputs_, params.outputs_};
 				
 				//start run
-				section_executor exec{cg_, backend_, tensors_};
-				exec_result res = exec.execute();
+				section_executor exec{cg_, backend_, tensors};
+				exec.execute();
 
-				return res;
+				return {.success=true};
 			}
 			
 
 		private:
-			env_section(borrowed_ptr<exec_env> env, const call_graph& cg) : 
-				env_{env}, cg_{cg} {}
 
 			const call_graph& cg_;
 			unique_ptr<forward_prop_diff> fp_diff_;
@@ -86,9 +117,8 @@ namespace plearn::env {
 			borrowed_ptr<backend_t> backend_;
 
 			hash_map<node_id, tensor_p> data_tensors_;
-			hash_map<node_id, tensor_p> tensors_;
+			section_resources resources_;
 
-			friend class exec_env;
 			friend class EnvSection_Execute_Test;
 	};
 

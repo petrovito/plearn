@@ -1,3 +1,4 @@
+#include "rep/rep_types.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -55,22 +56,23 @@ TEST(EnvSection, Execute) {
 
 	unique_ptr<MockBackend> mock_backend = std::make_unique<MockBackend>();
 	unique_ptr<MockExecEnv> mock_env = std::make_unique<MockExecEnv>();
-	env_section section{mock_env.get(), cg};
-	section.backend_ = mock_backend.get();
+
+	hash_map<node_id, tensor_p> data_tensors;
 	for (auto& [id, node]: cg.data_nodes_) {
-		section.data_tensors_[id] = mock_env->create_tensor(node.shape_);
+		data_tensors[id] = mock_env->create_tensor(node.shape_);
 	}
+	
+	env_section section{mock_env.get(), mock_backend.get(), cg, std::move(data_tensors)};
 
-
-	tensor_p in_tensor = mock_env->create_tensor(shape_t{768});
+	exec_params params;
+	params.inputs_[inn_id] = mock_env->create_tensor(shape_t{768});
+	params.outputs_[outn_id] = mock_env->create_tensor(shape_t{10});
 
 	EXPECT_CALL(*mock_backend, exec_op(_, _, _)).Times(2);
-	auto result = section.execute({{in_tensor}});
+	auto result = section.execute(params);
+	ASSERT_TRUE(result.success);
 
-	auto& out_tensors = result.outputs_;
-	ASSERT_EQ(out_tensors.size(), 1);
-	ASSERT_EQ(out_tensors[0]->shape(), shape_t{10});
-
+	ASSERT_EQ(params.outputs_[outn_id]->shape(), shape_t{10});
 }
 
 }

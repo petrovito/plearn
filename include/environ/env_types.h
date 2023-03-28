@@ -52,11 +52,12 @@ namespace plearn::env {
 
 
 	struct exec_params {
-		vector<tensor_p> inputs_;
+		hash_map<node_id, tensor_p> inputs_;
+		hash_map<node_id, tensor_p> outputs_;
 	};
 
 	struct exec_result {
-		vector<tensor_p> outputs_;
+		bool success{true};
 	};
 
 
