@@ -91,8 +91,18 @@ namespace plearn::rep {
 		add,
 	};
 
+	/**
+	 * Instruction on how to modify output tensor
+	 */
+	enum class output_modify_t {
+		set,
+		add,
+		substract,
+	};
+
 	struct operation {
 		op_type type_;
+		output_modify_t modify_ = output_modify_t::set;
 		
 		friend auto operator<=>(const operation&, const operation&) = default;
 	};

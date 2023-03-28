@@ -65,5 +65,6 @@ TEST(CpuBackendIntegration, Execute) {
 	//internal node = [9,12,15]
 	EXPECT_FLOAT_EQ(buf[0], 78);
 }
+
 }
 

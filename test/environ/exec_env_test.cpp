@@ -1,4 +1,5 @@
 #include "rep/rep_types.h"
+#include <gmock/gmock-function-mocker.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -15,11 +16,13 @@ namespace plearn::env {
 class MockBackend : public backend_t {
 	public:
 		MOCK_METHOD(void, exec_op,
-				(const operation& op, const vector<tensor_p>& inputs, tensor_p output)
+				(const operation& op, const vector<tensor_p>& inputs, tensor_p& output)
 				, (override));
 		unique_ptr<tensor_back_t> create_tensor(const shape_t&) override {
 			return std::unique_ptr<tensor_back_t>(nullptr);
 		}
+		void calc_grad(const operation&, unsigned, tensor_p&,
+				const vector<tensor_p>&, const tensor_p&) override {};
 };
 
 class MockExecEnv : public exec_env {

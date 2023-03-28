@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <rep/rep_types.h>
+#include <unordered_map>
 
 namespace plearn::env {
 
@@ -12,6 +13,7 @@ namespace plearn::env {
 	using tensor_id = uint64_t;
 	using std::unique_ptr;
 	using std::shared_ptr;
+	using std::unordered_map;
 	
 
 	class exec_env;
@@ -67,7 +69,10 @@ namespace plearn::env {
 	class backend_t {
 		public:
 			virtual void exec_op(const operation& op, 
-					const vector<tensor_p>& inputs, tensor_p output) = 0;
+					const vector<tensor_p>& inputs, tensor_p& output) = 0;
+			virtual void calc_grad(const operation& op, unsigned wrt_var_idx, 
+					tensor_p& grad,
+					const vector<tensor_p>& inputs, const tensor_p& output) = 0;
 			virtual unique_ptr<tensor_back_t> create_tensor(const shape_t& s) = 0;
 			virtual ~backend_t() = default;
 	};

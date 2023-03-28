@@ -1,7 +1,5 @@
 #pragma once
 
-#include "rep/call_graph_runner.h"
-#include <algorithm>
 #include <bits/ranges_algo.h>
 #include <cassert>
 #include <cstdint>
@@ -11,9 +9,12 @@
 
 #include <rep/rep_types.h>
 #include <rep/call_graph.h>
+#include <rep/call_graph_runner.h>
+#include <algorithm>
 #include <rep/forward_prop.h>
 #include <environ/env_types.h>
 #include <environ/exec_env.h>
+#include <environ/diff_env.h>
 
 namespace plearn::env {
 
@@ -53,19 +54,28 @@ namespace plearn::env {
 	 */
 	class section_executor {
 		public:
-			section_executor(const call_graph& cg, const borrowed_ptr<backend_t> backend, 
+			section_executor(const exec_params& params,
+					const call_graph& cg, borrowed_ptr<fp_diff_env> diff_env,
+					const borrowed_ptr<backend_t> backend, 
 					section_exec_tensors& tensors) : 
-				cg_{cg}, backend_{backend}, tensors_{tensors} {}
+				params_{params}, cg_{cg}, diff_env_{diff_env}, 
+				backend_{backend}, tensors_{tensors} {}
 
 			void execute() {
 				call_graph_runner runner{cg_};
 				runner.run([this] (const op_node& opn) {
 					auto& op = opn.op_;
+					//collect inputs and outputs
 					vector<tensor_p> inputs(opn.inputs_.size());
 					std::transform(opn.inputs_.begin(), opn.inputs_.end(), 
 							inputs.begin(), [this](auto id) { return tensors_[id]; });
 					tensor_p output = tensors_[opn.out_];
+					//execute operation
 					backend_->exec_op(op, inputs, output);
+					//calculate derivatives if required
+					if (params_.calc_diffs) {
+						diff_env_->calc_diff(opn, inputs, output);
+					}
 				});
 
 				vector<tensor_p> outputs(cg_.out_nodes_.size());
@@ -73,7 +83,9 @@ namespace plearn::env {
 						outputs.begin(), [this](auto id) { return tensors_[id]; });
 			}
 		private:
+			const exec_params& params_;
 			const call_graph& cg_;
+			borrowed_ptr<fp_diff_env> diff_env_;
 			const borrowed_ptr<backend_t> backend_;
 			section_exec_tensors& tensors_;
 	};
@@ -99,7 +111,7 @@ namespace plearn::env {
 					params.inputs_, params.outputs_};
 				
 				//start run
-				section_executor exec{cg_, backend_, tensors};
+				section_executor exec{params, cg_, fp_diff_env_.get(), backend_, tensors};
 				exec.execute();
 
 				return {.success=true};
@@ -124,6 +136,7 @@ namespace plearn::env {
 
 			const call_graph& cg_;
 			unique_ptr<forward_prop_diff> fp_diff_;
+			unique_ptr<fp_diff_env> fp_diff_env_;
 			borrowed_ptr<exec_env> env_;
 			borrowed_ptr<backend_t> backend_;
 

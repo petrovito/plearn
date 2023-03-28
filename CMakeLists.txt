@@ -50,6 +50,7 @@ if (PLEARN_TEST)
 		test/rep/forward_prop_test.cpp
 
 		test/environ/exec_env_test.cpp
+		test/environ/diff_env_test.cpp
 
 		test/backend/cpu/cpu_ops_test.cpp
 		test/backend/cpu/cpu_integration_test.cpp
