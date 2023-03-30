@@ -34,8 +34,22 @@ namespace plearn::backend::cpu {
 				if (!in_grads[i]->contains(varn_id)) continue;
 				//shape of var: [A]
 				auto& var_i_grad = in_grads[i]->at(varn_id);
-				auto var_i_grad_buf = ((cpu_tensor*)var_i_grad.back_.get())->get_content()->buf;
 				auto var_out_grad_buf = ((cpu_tensor*)var_out_grad.back_.get())->get_content()->buf;
+				if (var_i_grad.identity) {
+#define VAR_OUT_GRAD(m1,n,m2,k) var_out_grad_buf[m1 * N * M * K + n * M * K + m2 * K + k]
+					for (uint64_t m1 = 0; m1 < M; m1++) {
+						for (uint64_t n = 0; n < N; n++) {
+							for (uint64_t k = 0; k < K; k++) {
+								auto m2 = m1;
+								VAR_OUT_GRAD(m1,n,m2,k) = second_buf[n*K + k];
+
+							}
+						}
+					}
+#undef VAR_OUT_GRAD
+					continue;
+				}
+				auto var_i_grad_buf = ((cpu_tensor*)var_i_grad.back_.get())->get_content()->buf;
 				//shape of var_i_grad: [A, M,N]
 				//shape of i_out_grad: [M,N, M,K]
 				//shape of var_out_grad: [A, M,K]
@@ -67,8 +81,21 @@ namespace plearn::backend::cpu {
 				if (!in_grads[i]->contains(varn_id)) continue;
 				//shape of var: [A]
 				auto& var_i_grad = in_grads[i]->at(varn_id);
-				auto var_i_grad_buf = ((cpu_tensor*)var_i_grad.back_.get())->get_content()->buf;
 				auto var_out_grad_buf = ((cpu_tensor*)var_out_grad.back_.get())->get_content()->buf;
+				if (var_i_grad.identity) {
+#define VAR_OUT_GRAD(n,k1,m,k2) var_out_grad_buf[n *M*K*K + k1 *M*K + m*K + k2]
+					for (uint64_t n = 0; n < N; n++) {
+						for (uint64_t m = 0; m < M; m++) {
+							for (uint64_t k1 = 0; k1 < K; k1++) {
+								auto k2 = k1;
+								VAR_OUT_GRAD(n,k1,m,k2) += first_buf[m *N + n];
+							}
+						}
+					}
+#undef VAR_OUT_GRAD
+					continue;
+				}
+				auto var_i_grad_buf = ((cpu_tensor*)var_i_grad.back_.get())->get_content()->buf;
 				//shape of var_i_grad: [A, N,K]
 				//shape of i_out_grad: [N,K, M,K]
 				//shape of var_out_grad: [A, M,K]
