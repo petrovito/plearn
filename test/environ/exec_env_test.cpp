@@ -18,11 +18,14 @@ class MockBackend : public backend_t {
 		MOCK_METHOD(void, exec_op,
 				(const operation& op, const vector<tensor_p>& inputs, tensor_p& output)
 				, (override));
+
 		unique_ptr<tensor_back_t> create_tensor(const shape_t&) override {
 			return std::unique_ptr<tensor_back_t>(nullptr);
 		}
-		void calc_grad(const operation&, unsigned, tensor_p&,
-				const vector<tensor_p>&, const tensor_p&) override {};
+
+		void calc_forward_grad(const operation& ,
+				const vector<tensor_p>& , const tensor_p& ,
+				const vector<read_ptr<grad_map>>& , grad_map& ) override {};
 };
 
 class MockExecEnv : public exec_env {

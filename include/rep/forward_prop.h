@@ -13,14 +13,14 @@
 
 namespace plearn::rep {
 
-	struct gradient {
+	struct dep_type {
 		//TODO maybe size infos?
 		bool identity_{false};
 		bool independent_{false};
 	};
 
-	const gradient identity_gradient = gradient{true, false};
-	const gradient independent_gradient = gradient{false, true};
+	const dep_type identity_gradient = dep_type{true, false};
+	const dep_type independent_gradient = dep_type{false, true};
 
 	/**
 	 * Describes derivatives of a tensor node.
@@ -86,8 +86,8 @@ namespace plearn::rep {
 		}
 
 		op_node op_node_;//TODO should be reference, except identity is problematic
-		hash_map<node_id, gradient> direct_grads_{}; //calculated from op and input tensor values
-		hash_map<node_id, gradient> indirect_grads_{}; //calculated from direct_grads_
+		hash_map<node_id, dep_type> direct_grads_{}; //calculated from op and input tensor values
+		hash_map<node_id, dep_type> indirect_grads_{}; //calculated from direct_grads_
 	};
 
 

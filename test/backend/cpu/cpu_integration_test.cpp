@@ -4,7 +4,7 @@
 #include <environ/env_types.h>
 #include <environ/env_section.h>
 #include <environ/exec_env.h>
-#include <backend/cpu/cpu_env.h>
+#include <backend/cpu/cpu_backend.h>
 
 namespace plearn::backend::cpu {
 
