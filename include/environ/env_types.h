@@ -96,12 +96,13 @@ namespace plearn::env {
 	struct exec_params {
 		bool calc_diffs{false};
 
-		hash_map<node_id, tensor_p> inputs_;
-		hash_map<node_id, tensor_p> outputs_;
+		hash_map<node_id, tensor_p> inputs_{};
+		hash_map<node_id, tensor_p> outputs_{};
 	};
 
 	struct exec_result {
 		bool success{true};
+		borrowed_ptr<grad_system> grads;
 	};
 
 

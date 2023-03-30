@@ -72,6 +72,7 @@ namespace plearn::backend::cpu {
 						cpu_matmul_grad(op, inputs, output, in_grads, out_grad);
 						break;
 					case op_type::vecmatmul:
+						cpu_vecmatmul_grad(op, inputs, output, in_grads, out_grad);
 						break;
 					case op_type::add:
 						break;

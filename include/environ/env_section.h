@@ -86,7 +86,7 @@ namespace plearn::env {
 			const exec_params& params_;
 			const call_graph& cg_;
 			borrowed_ptr<fp_diff_env> diff_env_;
-			const borrowed_ptr<backend_t> backend_;
+			borrowed_ptr<backend_t> backend_;
 			section_exec_tensors& tensors_;
 	};
 
@@ -114,7 +114,7 @@ namespace plearn::env {
 				section_executor exec{params, cg_, fp_diff_env_.get(), backend_, tensors};
 				exec.execute();
 
-				return {.success=true};
+				return {.success=true, .grads=fp_diff_env_->gradients()};
 			}
 			
 
@@ -132,6 +132,8 @@ namespace plearn::env {
 					.all_data_nodes()
 					.find_depending_tensors()
 					.build();
+				fp_diff_env_ = std::make_unique<fp_diff_env>(cg_, fp_diff_.get(), backend_);
+				fp_diff_env_->init();
 			}
 
 			const call_graph& cg_;
