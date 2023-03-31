@@ -51,12 +51,20 @@ namespace plearn::env {
 						gradients_[tens_id][var_id] = gradient{var_shape, out_shape, false, shared_ptr<tensor_back_t>(back_t)};
 					}
 				}
-				
+			}
+
+			void reset() {
+				for (auto& [_, grads]: gradients_) {
+					for (auto& [_, grad]: grads) {
+						if (grad.back_)
+							grad.back_->zero();
+					}
+				}
 			}
 
 			void calc_diff(const op_node& opn, const vector<tensor_p>& inputs, const tensor_p& output) {
 				auto& out_diff = fp_diff_->derivatives().at(opn.out_);
-				//TODO check if output is const
+				//TODO check if output is const WRT all variables
 
 				vector<read_ptr<grad_map>> in_diffs(opn.inputs_.size());
 				std::transform(opn.inputs_.begin(), opn.inputs_.end(), in_diffs.begin(), 

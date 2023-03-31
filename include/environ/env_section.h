@@ -107,6 +107,10 @@ namespace plearn::env {
 
 			exec_result execute(exec_params& params) {
 				//prepare run
+				reset_internal_tensors();
+				if (params.calc_diffs) {
+					fp_diff_env_->reset();
+				}
 				section_exec_tensors tensors{resources_.internal_tensors_, data_tensors_,
 					params.inputs_, params.outputs_};
 				
@@ -123,6 +127,12 @@ namespace plearn::env {
 				for (auto intn_id: cg_.internal_nodes_) {
 					auto& node = cg_.flow_nodes_.at(intn_id);
 					resources_.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
+				}
+			}
+
+			void reset_internal_tensors() {
+				for (auto& [id, tens]: resources_.internal_tensors_) {
+					tens->back()->zero();
 				}
 			}
 

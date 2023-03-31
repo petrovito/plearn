@@ -44,7 +44,7 @@ namespace plearn::backend::cpu {
 			/**
 			 *  Zero out tensor content.
 			 */
-			void zero() { std::fill_n(content_->buf, shape_.size(), 0); }
+			void zero() override { std::fill_n(content_->buf, shape_.size(), 0.f); }
 
 		private:
 			cpu_tensor(shape_t shape, const shared_ptr<tensor_buf>& buf) :

@@ -10,8 +10,12 @@
 
 namespace plearn::env {
 
-	using ::testing::_;
+using ::testing::_;
 
+class MockTensorBack : public tensor_back_t {
+	public:
+		void zero() override {};
+};
 
 class MockBackend : public backend_t {
 	public:
@@ -20,7 +24,7 @@ class MockBackend : public backend_t {
 				, (override));
 
 		unique_ptr<tensor_back_t> create_tensor(const shape_t&) override {
-			return std::unique_ptr<tensor_back_t>(nullptr);
+			return std::make_unique<MockTensorBack>();
 		}
 
 		void calc_forward_grad(const operation& ,
@@ -32,10 +36,11 @@ class MockExecEnv : public exec_env {
 	public:
 		MockExecEnv(backend_t* backend) : exec_env(backend) {}
 		tensor_p create_tensor(const shape_t& s) override {
-			auto back_tensor = std::unique_ptr<tensor_back_t>(nullptr);
+			auto back_tensor = std::make_unique<MockTensorBack>();
 			return tens_fac_.create(s, std::move(back_tensor));
 		}
 };
+
 
 
 TEST(EnvSection, Execute) {

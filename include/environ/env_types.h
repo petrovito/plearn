@@ -121,6 +121,7 @@ namespace plearn::env {
 
 	class tensor_back_t {
 		public:
+			virtual void zero() = 0; //anull tensor
 			virtual ~tensor_back_t() = default;
 	};
 
