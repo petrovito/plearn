@@ -18,7 +18,7 @@ TEST(ForwardProp, Builder) {
 	cg_builder.make_output(outn_id);
 	auto cg = cg_builder.build();
 
-	forward_prop_diff_builder fp_builder(cg);
+	diff_info_builder fp_builder(cg);
 	auto fp_diff = fp_builder.all_data_nodes()
 		.find_depending_tensors()
 		.build();

@@ -26,7 +26,8 @@ message OpNodeM {
 message TensorNodeM {
 	int32 id = 1;
 	ShapeM shape = 2;
-	repeated int32 outputs = 3;
+	optional int32 input = 3;
+	repeated int32 outputs = 4;
 }
 
 

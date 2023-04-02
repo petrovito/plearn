@@ -23,6 +23,15 @@ TEST(Persistence, SaveLoad) {
 
 	Persistence::save(cg, path);
 	call_graph cg2 = Persistence::load(path);
+
+	EXPECT_EQ(cg.flow_nodes_, cg2.flow_nodes_);
+	EXPECT_EQ(cg.data_nodes_, cg2.data_nodes_);
+	EXPECT_EQ(cg.op_nodes_, cg2.op_nodes_);
+	EXPECT_EQ(cg.in_nodes_, cg2.in_nodes_);
+	EXPECT_EQ(cg.out_nodes_, cg2.out_nodes_);
+	EXPECT_EQ(cg.internal_nodes_, cg2.internal_nodes_);
+
+
 	EXPECT_EQ(cg, cg2);
 }
 

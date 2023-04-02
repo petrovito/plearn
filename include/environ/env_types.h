@@ -147,16 +147,42 @@ namespace plearn::env {
 			read_ptr<tensor_p> output_;
 	};
 
+	class bp_op_diff_backend_t {
+		public:
+			virtual void reset(const vector<tensor_p>& inputs, const tensor_p& output) {
+				this->inputs_ = &inputs;
+				this->output_ = &output;
+			}
+			/* virtual void update_grad_with_identity(unsigned input_idx, */ 
+			/* 		gradient& var_out_grad) { */ 
+			/* 	(void)input_idx; */
+			/* 	(void)var_out_grad; */
+			/* 	throw std::runtime_error("unimplemented"); */ 
+			/* } */
+			virtual void update_grad(unsigned input_idx, 
+					const gradient& out_grad, gradient& var_out_grad) = 0;
+		
+		protected:
+			read_ptr<vector<tensor_p>> inputs_;
+			read_ptr<tensor_p> output_;
+	};
+
+	class bp_diff_backend_t {
+		public:
+			virtual unique_ptr<fp_op_diff_backend_t> create_op_bw_diff_backend(const operation& op) = 0;
+
+			virtual ~bp_diff_backend_t() = default;
+	};
 
 	class fp_diff_backend_t {
 		public:
-			virtual unique_ptr<fp_op_diff_backend_t> create_op_diff_backend(const operation& op) = 0;
+			virtual unique_ptr<fp_op_diff_backend_t> create_op_fw_diff_backend(const operation& op) = 0;
 
 			virtual ~fp_diff_backend_t() = default;
 	};
 
 
-	class backend_t : public op_exec_backend_t, public fp_diff_backend_t {
+	class backend_t : public op_exec_backend_t, public fp_diff_backend_t, public bp_diff_backend_t {
 		public:
 			virtual unique_ptr<tensor_back_t> create_tensor(const shape_t& s) = 0;
 

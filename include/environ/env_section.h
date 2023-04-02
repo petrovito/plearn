@@ -62,7 +62,7 @@ namespace plearn::env {
 				backend_{backend}, tensors_{tensors} {}
 
 			void execute() {
-				call_graph_runner runner{cg_};
+				call_graph_forward_runner runner{cg_};
 				runner.run([this] (const op_node& opn) {
 					auto& op = opn.op_;
 					//collect inputs and outputs
@@ -137,7 +137,7 @@ namespace plearn::env {
 			}
 
 			void create_fp_diff() {
-				forward_prop_diff_builder builder{cg_};
+				diff_info_builder builder{cg_};
 				fp_diff_ = builder
 					.all_data_nodes()
 					.find_depending_tensors()
@@ -147,7 +147,7 @@ namespace plearn::env {
 			}
 
 			const call_graph& cg_;
-			unique_ptr<forward_prop_diff> fp_diff_;
+			unique_ptr<diff_info> fp_diff_;
 			unique_ptr<fp_diff_env> fp_diff_env_;
 			borrowed_ptr<exec_env> env_;
 			borrowed_ptr<backend_t> backend_;

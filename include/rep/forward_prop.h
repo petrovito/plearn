@@ -13,15 +13,6 @@
 
 namespace plearn::rep {
 
-	struct dep_type {
-		//TODO maybe size infos?
-		bool identity_{false};
-		bool independent_{false};
-	};
-
-	const dep_type identity_gradient = dep_type{true, false};
-	const dep_type independent_gradient = dep_type{false, true};
-
 	/**
 	 * Describes derivatives of a tensor node.
 	 * Both direct and indirect derivatives are stored.
@@ -91,14 +82,16 @@ namespace plearn::rep {
 	};
 
 
-	class forward_prop_diff {
+	class diff_info {
 
 		public:
-			forward_prop_diff(
+			diff_info(
 					vector<node_id>&& variable_nodes,
+					vector<node_id>&& output_nodes,
 					hash_map<node_id, op_derivative>&& derivatives
 					) :
 				variable_nodes_{std::move(variable_nodes)},
+				output_nodes_{std::move(output_nodes)},
 				derivatives_{std::move(derivatives)} {} ;
 
 			//getters
@@ -106,21 +99,22 @@ namespace plearn::rep {
 			const hash_map<node_id, op_derivative>& derivatives() const { return derivatives_; }
 		private:
 			vector<node_id> variable_nodes_;
+			vector<node_id> output_nodes_;
 			hash_map<node_id, op_derivative> derivatives_;
 	};
 	
 
-	class forward_prop_diff_builder {
+	class diff_info_builder {
 
 		public:
-			forward_prop_diff_builder(const call_graph& graph) :
+			diff_info_builder(const call_graph& graph) :
 				graph_{graph} { }
 			
 			/**
 			 * The variable tensors of the system.
 			 * I.e. calculate the derivatives WRT these tensors.
 			 */
-			forward_prop_diff_builder& variable_nodes(const vector<node_id>& data_nodes) {
+			diff_info_builder& variable_nodes(const vector<node_id>& data_nodes) {
 				variable_nodes_ = data_nodes;
 				return *this;
 			}
@@ -128,7 +122,7 @@ namespace plearn::rep {
 			/**
 			 * Set all data nodes to be variable nodes.
 			 */
-			forward_prop_diff_builder& all_data_nodes() {
+			diff_info_builder& all_data_nodes() {
 				for (auto& [id, node]: graph_.data_nodes_) {
 					variable_nodes_.push_back(id);
 				}
@@ -138,7 +132,7 @@ namespace plearn::rep {
 			/**
 			 * Find the nodes that are dependant on the requested data nodes.
 			 */
-			forward_prop_diff_builder& find_depending_tensors() {
+			diff_info_builder& find_depending_tensors() {
 				if (variable_nodes_.empty()) {
 					//set variables to be all data nodes
 					all_data_nodes();
@@ -153,7 +147,7 @@ namespace plearn::rep {
 					derivatives_[inn_id] = op_derivative::independent(inn_id, variable_nodes_);
 				}
 				//find derivatives for all flow node-tensors
-				call_graph_runner runner{graph_};
+				call_graph_forward_runner runner{graph_};
 				runner.run([this] (const op_node& opn) {
 					//iterate over inputs and find dependant variable tensors for output recursively
 					op_derivative out_diffs{opn, variable_nodes_};
@@ -173,9 +167,10 @@ namespace plearn::rep {
 				return *this;
 			}
 
-			unique_ptr<forward_prop_diff> build() {
-				return make_unique<forward_prop_diff>(
+			unique_ptr<diff_info> build() {
+				return make_unique<diff_info>(
 						std::move(variable_nodes_),
+						std::move(output_nodes_),
 						std::move(derivatives_)
 						);
 			}
@@ -184,6 +179,7 @@ namespace plearn::rep {
 		private:
 			const call_graph& graph_;
 			vector<node_id> variable_nodes_;
+			vector<node_id> output_nodes_;
 			hash_map<node_id, op_derivative> derivatives_;
 	};
 	

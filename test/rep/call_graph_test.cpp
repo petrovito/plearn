@@ -64,17 +64,33 @@ TEST(CallGraph, Runner) {
 
 	auto cg = builder.build();
 
-	auto runner = call_graph_runner(cg);
-	
-	runner.reset();
-	auto& ready_ops = runner.ready_ops();
+	auto fw_runner = call_graph_forward_runner(cg);
+	{
+	fw_runner.reset();
+	auto& ready_ops = fw_runner.ready_ops();
 	ASSERT_EQ(ready_ops.size(), 1);
 	ASSERT_TRUE(ready_ops.contains(op1n_id));
-	runner.op_finished(op1n_id);
+	fw_runner.op_finished(op1n_id);
 	ASSERT_EQ(ready_ops.size(), 1);
 	ASSERT_TRUE(ready_ops.contains(op2n_id));
-	runner.op_finished(op2n_id);
+	fw_runner.op_finished(op2n_id);
 	ASSERT_EQ(ready_ops.size(), 0);
-	ASSERT_EQ(runner.state(), run_state::READY);
+	ASSERT_EQ(fw_runner.state(), run_state::READY);
+	}
+
+	auto bw_runner = call_graph_backward_runner(cg);
+	{
+	bw_runner.reset();
+	auto& ready_ops = bw_runner.ready_ops();
+	ASSERT_EQ(ready_ops.size(), 1);
+	ASSERT_TRUE(ready_ops.contains(op2n_id));
+	bw_runner.op_finished(op2n_id);
+	ASSERT_EQ(ready_ops.size(), 1);
+	ASSERT_TRUE(ready_ops.contains(op1n_id));
+	bw_runner.op_finished(op1n_id);
+	ASSERT_EQ(ready_ops.size(), 0);
+	ASSERT_EQ(bw_runner.state(), run_state::READY);
+	}
+
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <rep/rep_types.h>
 
 namespace plearn::rep {
@@ -7,6 +8,7 @@ namespace plearn::rep {
 	struct tensor_node {
 		node_id id_;
 		shape_t shape_;
+		std::optional<node_id> input_{};
 		vector<node_id> outputs_{};
 		
 		friend auto operator<=>(const tensor_node&, const tensor_node&) = default;
@@ -54,7 +56,7 @@ namespace plearn::rep {
 	class call_graph_builder {
 		public:
 			node_id add_input_node(shape_t s) {
-				return add_flow_node(s, true);
+				return add_flow_node(s, std::nullopt);
 			}
 
 			node_id add_data_node(shape_t s) {
@@ -65,11 +67,11 @@ namespace plearn::rep {
 				return id;
 			}
 			
-			//return
+			//returns the id of the op node and the id of the output tensor node
 			std::tuple<node_id, node_id> add_op_node(operation op,
 					vector<node_id> inputs, shape_t out_shape) {
 				node_id id = next_id_++;
-				auto out_id = add_flow_node(out_shape);
+				auto out_id = add_flow_node(out_shape, id);
 				op_node on{id, op, inputs, out_id};
 				op_nodes_[id] = on;
 				//add op to tensor node outputs
@@ -102,15 +104,16 @@ namespace plearn::rep {
 			}
 
 		private:
-			node_id add_flow_node(shape_t s, bool is_input=false) {
+			node_id add_flow_node(shape_t s, std::optional<node_id> input) {
 				node_id id = next_id_++;
-				tensor_node tn{id, s};
+				tensor_node tn{id, s, input};
 				flow_nodes_[id] = tn;
 				tensor_nodes_[id] = &flow_nodes_[id];
-				if (is_input)
-					in_nodes_.push_back(id);
-				else 
+				if (input.has_value()) {
 					internal_nodes_.push_back(id);
+				} else { //input node
+					in_nodes_.push_back(id);
+				}
 				return id;
 			}
 

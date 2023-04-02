@@ -27,7 +27,10 @@ class MockBackend : public backend_t {
 			return std::make_unique<MockTensorBack>();
 		}
 
-		unique_ptr<fp_op_diff_backend_t> create_op_diff_backend(
+		unique_ptr<fp_op_diff_backend_t> create_op_fw_diff_backend(
+				const operation&  ) override { return nullptr; }
+
+		unique_ptr<fp_op_diff_backend_t> create_op_bw_diff_backend(
 				const operation&  ) override { return nullptr; }
 
 };

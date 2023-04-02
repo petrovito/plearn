@@ -75,6 +75,15 @@ namespace plearn::rep {
 	
 
 
+	struct dep_type {
+		bool identity_{false};
+		bool independent_{false};
+	};
+
+	const dep_type identity_gradient = dep_type{true, false};
+	const dep_type independent_gradient = dep_type{false, true};
+
+
 
 
 

@@ -199,14 +199,19 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_call_5fgraph_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::plearn::OpNodeM, op_),
   PROTOBUF_FIELD_OFFSET(::plearn::OpNodeM, inputs_),
   PROTOBUF_FIELD_OFFSET(::plearn::OpNodeM, output_),
-  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::plearn::TensorNodeM, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::plearn::TensorNodeM, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::plearn::TensorNodeM, id_),
   PROTOBUF_FIELD_OFFSET(::plearn::TensorNodeM, shape_),
+  PROTOBUF_FIELD_OFFSET(::plearn::TensorNodeM, input_),
   PROTOBUF_FIELD_OFFSET(::plearn::TensorNodeM, outputs_),
+  ~0u,
+  ~0u,
+  0,
+  ~0u,
   PROTOBUF_FIELD_OFFSET(::plearn::CallGraphM_OpNodesEntry_DoNotUse, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::plearn::CallGraphM_OpNodesEntry_DoNotUse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -250,11 +255,11 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOB
   { 0, -1, sizeof(::plearn::OperationM)},
   { 6, -1, sizeof(::plearn::ShapeM)},
   { 13, -1, sizeof(::plearn::OpNodeM)},
-  { 22, -1, sizeof(::plearn::TensorNodeM)},
-  { 30, 37, sizeof(::plearn::CallGraphM_OpNodesEntry_DoNotUse)},
-  { 39, 46, sizeof(::plearn::CallGraphM_FlowNodesEntry_DoNotUse)},
-  { 48, 55, sizeof(::plearn::CallGraphM_DataNodesEntry_DoNotUse)},
-  { 57, -1, sizeof(::plearn::CallGraphM)},
+  { 22, 31, sizeof(::plearn::TensorNodeM)},
+  { 35, 42, sizeof(::plearn::CallGraphM_OpNodesEntry_DoNotUse)},
+  { 44, 51, sizeof(::plearn::CallGraphM_FlowNodesEntry_DoNotUse)},
+  { 53, 60, sizeof(::plearn::CallGraphM_DataNodesEntry_DoNotUse)},
+  { 62, -1, sizeof(::plearn::CallGraphM)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
@@ -273,21 +278,22 @@ const char descriptor_table_protodef_call_5fgraph_2eproto[] PROTOBUF_SECTION_VAR
   "\022\037\n\006opType\030\001 \001(\0162\017.plearn.OpTypeM\"$\n\006Sha"
   "peM\022\014\n\004rank\030\001 \001(\005\022\014\n\004dims\030\002 \003(\003\"U\n\007OpNod"
   "eM\022\n\n\002id\030\001 \001(\005\022\036\n\002op\030\002 \001(\0132\022.plearn.Oper"
-  "ationM\022\016\n\006inputs\030\003 \003(\005\022\016\n\006output\030\004 \001(\005\"I"
+  "ationM\022\016\n\006inputs\030\003 \003(\005\022\016\n\006output\030\004 \001(\005\"g"
   "\n\013TensorNodeM\022\n\n\002id\030\001 \001(\005\022\035\n\005shape\030\002 \001(\013"
-  "2\016.plearn.ShapeM\022\017\n\007outputs\030\003 \003(\005\"\263\003\n\nCa"
-  "llGraphM\0220\n\007opNodes\030\001 \003(\0132\037.plearn.CallG"
-  "raphM.OpNodesEntry\0224\n\tflowNodes\030\002 \003(\0132!."
-  "plearn.CallGraphM.FlowNodesEntry\0224\n\tdata"
-  "Nodes\030\003 \003(\0132!.plearn.CallGraphM.DataNode"
-  "sEntry\022\017\n\007inNodes\030\004 \003(\005\022\020\n\010outNodes\030\005 \003("
-  "\005\022\025\n\rinternalNodes\030\006 \003(\005\032\?\n\014OpNodesEntry"
-  "\022\013\n\003key\030\001 \001(\005\022\036\n\005value\030\002 \001(\0132\017.plearn.Op"
-  "NodeM:\0028\001\032E\n\016FlowNodesEntry\022\013\n\003key\030\001 \001(\005"
-  "\022\"\n\005value\030\002 \001(\0132\023.plearn.TensorNodeM:\0028\001"
-  "\032E\n\016DataNodesEntry\022\013\n\003key\030\001 \001(\005\022\"\n\005value"
-  "\030\002 \001(\0132\023.plearn.TensorNodeM:\0028\001*\037\n\007OpTyp"
-  "eM\022\010\n\004NOOP\020\000\022\n\n\006MATMUL\020\001b\006proto3"
+  "2\016.plearn.ShapeM\022\022\n\005input\030\003 \001(\005H\000\210\001\001\022\017\n\007"
+  "outputs\030\004 \003(\005B\010\n\006_input\"\263\003\n\nCallGraphM\0220"
+  "\n\007opNodes\030\001 \003(\0132\037.plearn.CallGraphM.OpNo"
+  "desEntry\0224\n\tflowNodes\030\002 \003(\0132!.plearn.Cal"
+  "lGraphM.FlowNodesEntry\0224\n\tdataNodes\030\003 \003("
+  "\0132!.plearn.CallGraphM.DataNodesEntry\022\017\n\007"
+  "inNodes\030\004 \003(\005\022\020\n\010outNodes\030\005 \003(\005\022\025\n\rinter"
+  "nalNodes\030\006 \003(\005\032\?\n\014OpNodesEntry\022\013\n\003key\030\001 "
+  "\001(\005\022\036\n\005value\030\002 \001(\0132\017.plearn.OpNodeM:\0028\001\032"
+  "E\n\016FlowNodesEntry\022\013\n\003key\030\001 \001(\005\022\"\n\005value\030"
+  "\002 \001(\0132\023.plearn.TensorNodeM:\0028\001\032E\n\016DataNo"
+  "desEntry\022\013\n\003key\030\001 \001(\005\022\"\n\005value\030\002 \001(\0132\023.p"
+  "learn.TensorNodeM:\0028\001*\037\n\007OpTypeM\022\010\n\004NOOP"
+  "\020\000\022\n\n\006MATMUL\020\001b\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_call_5fgraph_2eproto_deps[1] = {
 };
@@ -303,7 +309,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_cal
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_call_5fgraph_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_call_5fgraph_2eproto = {
-  false, false, descriptor_table_protodef_call_5fgraph_2eproto, "call_graph.proto", 752,
+  false, false, descriptor_table_protodef_call_5fgraph_2eproto, "call_graph.proto", 782,
   &descriptor_table_call_5fgraph_2eproto_once, descriptor_table_call_5fgraph_2eproto_sccs, descriptor_table_call_5fgraph_2eproto_deps, 8, 0,
   schemas, file_default_instances, TableStruct_call_5fgraph_2eproto::offsets,
   file_level_metadata_call_5fgraph_2eproto, 8, file_level_enum_descriptors_call_5fgraph_2eproto, file_level_service_descriptors_call_5fgraph_2eproto,
@@ -1082,7 +1088,11 @@ void TensorNodeM::InitAsDefaultInstance() {
 }
 class TensorNodeM::_Internal {
  public:
+  using HasBits = decltype(std::declval<TensorNodeM>()._has_bits_);
   static const ::plearn::ShapeM& shape(const TensorNodeM* msg);
+  static void set_has_input(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
 };
 
 const ::plearn::ShapeM&
@@ -1098,6 +1108,7 @@ TensorNodeM::TensorNodeM(::PROTOBUF_NAMESPACE_ID::Arena* arena)
 }
 TensorNodeM::TensorNodeM(const TensorNodeM& from)
   : ::PROTOBUF_NAMESPACE_ID::Message(),
+      _has_bits_(from._has_bits_),
       outputs_(from.outputs_) {
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   if (from._internal_has_shape()) {
@@ -1105,15 +1116,17 @@ TensorNodeM::TensorNodeM(const TensorNodeM& from)
   } else {
     shape_ = nullptr;
   }
-  id_ = from.id_;
+  ::memcpy(&id_, &from.id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&input_) -
+    reinterpret_cast<char*>(&id_)) + sizeof(input_));
   // @@protoc_insertion_point(copy_constructor:plearn.TensorNodeM)
 }
 
 void TensorNodeM::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_TensorNodeM_call_5fgraph_2eproto.base);
   ::memset(&shape_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&id_) -
-      reinterpret_cast<char*>(&shape_)) + sizeof(id_));
+      reinterpret_cast<char*>(&input_) -
+      reinterpret_cast<char*>(&shape_)) + sizeof(input_));
 }
 
 TensorNodeM::~TensorNodeM() {
@@ -1154,11 +1167,14 @@ void TensorNodeM::Clear() {
   }
   shape_ = nullptr;
   id_ = 0;
+  input_ = 0;
+  _has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 const char* TensorNodeM::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
   ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
   while (!ctx->Done(&ptr)) {
     ::PROTOBUF_NAMESPACE_ID::uint32 tag;
@@ -1179,12 +1195,20 @@ const char* TensorNodeM::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
-      // repeated int32 outputs = 3;
+      // int32 input = 3;
       case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24)) {
+          _Internal::set_has_input(&has_bits);
+          input_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // repeated int32 outputs = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 34)) {
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedInt32Parser(_internal_mutable_outputs(), ptr, ctx);
           CHK_(ptr);
-        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 24) {
+        } else if (static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32) {
           _internal_add_outputs(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr));
           CHK_(ptr);
         } else goto handle_unusual;
@@ -1204,6 +1228,7 @@ const char* TensorNodeM::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID
     }  // switch
   }  // while
 success:
+  _has_bits_.Or(has_bits);
   return ptr;
 failure:
   ptr = nullptr;
@@ -1231,12 +1256,18 @@ failure:
         2, _Internal::shape(this), target, stream);
   }
 
-  // repeated int32 outputs = 3;
+  // int32 input = 3;
+  if (_internal_has_input()) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(3, this->_internal_input(), target);
+  }
+
+  // repeated int32 outputs = 4;
   {
     int byte_size = _outputs_cached_byte_size_.load(std::memory_order_relaxed);
     if (byte_size > 0) {
       target = stream->WriteInt32Packed(
-          3, _internal_outputs(), byte_size, target);
+          4, _internal_outputs(), byte_size, target);
     }
   }
 
@@ -1256,7 +1287,7 @@ size_t TensorNodeM::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated int32 outputs = 3;
+  // repeated int32 outputs = 4;
   {
     size_t data_size = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       Int32Size(this->outputs_);
@@ -1283,6 +1314,14 @@ size_t TensorNodeM::ByteSizeLong() const {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
         this->_internal_id());
+  }
+
+  // int32 input = 3;
+  cached_has_bits = _has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+        this->_internal_input());
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1323,6 +1362,9 @@ void TensorNodeM::MergeFrom(const TensorNodeM& from) {
   if (from.id() != 0) {
     _internal_set_id(from._internal_id());
   }
+  if (from._internal_has_input()) {
+    _internal_set_input(from._internal_input());
+  }
 }
 
 void TensorNodeM::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
@@ -1346,10 +1388,11 @@ bool TensorNodeM::IsInitialized() const {
 void TensorNodeM::InternalSwap(TensorNodeM* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  swap(_has_bits_[0], other->_has_bits_[0]);
   outputs_.InternalSwap(&other->outputs_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(TensorNodeM, id_)
-      + sizeof(TensorNodeM::id_)
+      PROTOBUF_FIELD_OFFSET(TensorNodeM, input_)
+      + sizeof(TensorNodeM::input_)
       - PROTOBUF_FIELD_OFFSET(TensorNodeM, shape_)>(
           reinterpret_cast<char*>(&shape_),
           reinterpret_cast<char*>(&other->shape_));

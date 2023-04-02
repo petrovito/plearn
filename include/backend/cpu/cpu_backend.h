@@ -7,7 +7,7 @@
 #include <environ/env_types.h>
 #include <backend/cpu/cpu_types.h>
 #include <backend/cpu/cpu_ops.h>
-#include <backend/cpu/cpu_chain_grad.h>
+#include <backend/cpu/cpu_fp_grad.h>
 
 namespace plearn::backend::cpu {
 
@@ -44,7 +44,7 @@ namespace plearn::backend::cpu {
 				return unique_ptr<cpu_tensor>(tens);
 			}
 
-			unique_ptr<fp_op_diff_backend_t> create_op_diff_backend(
+			unique_ptr<fp_op_diff_backend_t> create_op_fw_diff_backend(
 					const operation& op 
 			) override {
 				switch (op.type_) {
@@ -58,6 +58,13 @@ namespace plearn::backend::cpu {
 					case op_type::add:
 						break;
 				}
+				throw std::runtime_error("Not implemented");
+			}
+
+			unique_ptr<fp_op_diff_backend_t> create_op_bw_diff_backend(
+					const operation& op 
+			) override {
+				throw std::runtime_error("Not implemented");
 			}
 
 		private:

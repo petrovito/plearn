@@ -728,11 +728,12 @@ class TensorNodeM PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kOutputsFieldNumber = 3,
+    kOutputsFieldNumber = 4,
     kShapeFieldNumber = 2,
     kIdFieldNumber = 1,
+    kInputFieldNumber = 3,
   };
-  // repeated int32 outputs = 3;
+  // repeated int32 outputs = 4;
   int outputs_size() const;
   private:
   int _internal_outputs_size() const;
@@ -781,6 +782,19 @@ class TensorNodeM PROTOBUF_FINAL :
   void _internal_set_id(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
+  // int32 input = 3;
+  bool has_input() const;
+  private:
+  bool _internal_has_input() const;
+  public:
+  void clear_input();
+  ::PROTOBUF_NAMESPACE_ID::int32 input() const;
+  void set_input(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_input() const;
+  void _internal_set_input(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:plearn.TensorNodeM)
  private:
   class _Internal;
@@ -788,11 +802,13 @@ class TensorNodeM PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< ::PROTOBUF_NAMESPACE_ID::int32 > outputs_;
   mutable std::atomic<int> _outputs_cached_byte_size_;
   ::plearn::ShapeM* shape_;
   ::PROTOBUF_NAMESPACE_ID::int32 id_;
-  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  ::PROTOBUF_NAMESPACE_ID::int32 input_;
   friend struct ::TableStruct_call_5fgraph_2eproto;
 };
 // -------------------------------------------------------------------
@@ -1538,7 +1554,35 @@ inline void TensorNodeM::set_allocated_shape(::plearn::ShapeM* shape) {
   // @@protoc_insertion_point(field_set_allocated:plearn.TensorNodeM.shape)
 }
 
-// repeated int32 outputs = 3;
+// int32 input = 3;
+inline bool TensorNodeM::_internal_has_input() const {
+  bool value = (_has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool TensorNodeM::has_input() const {
+  return _internal_has_input();
+}
+inline void TensorNodeM::clear_input() {
+  input_ = 0;
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 TensorNodeM::_internal_input() const {
+  return input_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 TensorNodeM::input() const {
+  // @@protoc_insertion_point(field_get:plearn.TensorNodeM.input)
+  return _internal_input();
+}
+inline void TensorNodeM::_internal_set_input(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _has_bits_[0] |= 0x00000001u;
+  input_ = value;
+}
+inline void TensorNodeM::set_input(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_input(value);
+  // @@protoc_insertion_point(field_set:plearn.TensorNodeM.input)
+}
+
+// repeated int32 outputs = 4;
 inline int TensorNodeM::_internal_outputs_size() const {
   return outputs_.size();
 }

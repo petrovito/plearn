@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+#include <optional>
 #include <rep/call_graph.h>
 #include <data/gen/call_graph.pb.h>
 
@@ -87,9 +88,11 @@ namespace plearn::data {
 	class TensorNodeConverter {
 		public:
 			static tensor_node to_tensor_node(const TensorNodeM& node) {
+				auto input = node.has_input() ? std::optional(node.input()) : std::nullopt;
 				return tensor_node{
 					.id_=node.id(),
 					.shape_= ShapeConverter::to_shape(node.shape()),
+					.input_{input},
 					.outputs_{to_vector(node.outputs())}
 				};
 			}
@@ -98,6 +101,9 @@ namespace plearn::data {
 				TensorNodeM* node_m = new TensorNodeM;
 				node_m->set_id(node.id_);
 				node_m->set_allocated_shape(ShapeConverter::to_proto(node.shape_));
+				if (node.input_.has_value()) {
+					node_m->set_input(node.input_.value());
+				}
 				for (auto output: node.outputs_) {
 					node_m->add_outputs(output);
 				}
@@ -110,29 +116,13 @@ namespace plearn::data {
 			static call_graph to_call_graph(const CallGraphM& graph) {
 				call_graph cg;
 				for (auto& [id, node]: graph.datanodes()) {
-					tensor_node tens_node{
-						.id_=id, 
-						.shape_{ShapeConverter::to_shape(node.shape())},
-						.outputs_{to_vector(node.outputs())}
-					};
-					cg.data_nodes_[id] = tens_node;
+					cg.data_nodes_[id] = TensorNodeConverter::to_tensor_node(node);
 				}
 				for (auto& [id, node]: graph.flownodes()) {
-					tensor_node flow_node{
-						.id_=id,
-						.shape_= ShapeConverter::to_shape(node.shape()),
-						.outputs_{to_vector(node.outputs())}
-					};
-					cg.flow_nodes_[id] = flow_node;
+					cg.flow_nodes_[id] = TensorNodeConverter::to_tensor_node(node);
 				}
 				for (auto& [id, node]: graph.opnodes()) {
-					op_node op_node{
-						.id_=id,
-						.op_=OperationConverter::to_operation(node.op()),
-						.inputs_=to_vector(node.inputs()),
-						.out_=node.output()
-					};
-					cg.op_nodes_[id] = op_node;
+					cg.op_nodes_[id] = OpNodeConverter::to_op_node(node);
 				}
 				for (auto inn: graph.innodes()) {
 					cg.in_nodes_.push_back(inn);
