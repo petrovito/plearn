@@ -53,6 +53,7 @@ if (PLEARN_TEST)
 		test/environ/diff_env_test.cpp
 
 		test/backend/cpu/cpu_ops_test.cpp
+		test/backend/cpu/cpu_fp_chain_grad_test.cpp
 		test/backend/cpu/cpu_integration_test.cpp
 
 		test/data/persistence_test.cpp

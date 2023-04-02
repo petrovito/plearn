@@ -1,6 +1,6 @@
-#include "backend/cpu/cpu_types.h"
 #include <gtest/gtest.h>
 
+#include "backend/cpu/cpu_types.h"
 #include <environ/env_types.h>
 #include <environ/env_section.h>
 #include <environ/exec_env.h>
@@ -140,9 +140,9 @@ TEST(CpuBackendIntegration, Diff) {
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;
 	EXPECT_FLOAT_EQ(buf[0], 78);
 
-	auto& grads = result.grads->at(outn_id);
+	auto& grads = result.grad_system_->at(outn_id);
 	auto data1_out_grad = grads.at(data1n_id);
-	auto data1_out_grad_buf = ((cpu_tensor*) data1_out_grad.back_.get())->get_content()->buf;
+	auto data1_out_grad_buf = ((cpu_tensor*) data1_out_grad.grad_.back_.get())->get_content()->buf;
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[0], 1);
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[1], 2);
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[2], 3);
@@ -151,7 +151,7 @@ TEST(CpuBackendIntegration, Diff) {
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[5], 6);
 
 	auto data2_out_grad = grads.at(data2n_id);
-	auto data2_out_grad_buf = ((cpu_tensor*) data2_out_grad.back_.get())->get_content()->buf;
+	auto data2_out_grad_buf = ((cpu_tensor*) data2_out_grad.grad_.back_.get())->get_content()->buf;
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[0], 9);
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[1], 12);
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[2], 15);
@@ -169,9 +169,9 @@ TEST(CpuBackendIntegration, Diff) {
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;
 	EXPECT_FLOAT_EQ(buf[0], 78);
 
-	auto& grads = result.grads->at(outn_id);
+	auto& grads = result.grad_system_->at(outn_id);
 	auto data1_out_grad = grads.at(data1n_id);
-	auto data1_out_grad_buf = ((cpu_tensor*) data1_out_grad.back_.get())->get_content()->buf;
+	auto data1_out_grad_buf = ((cpu_tensor*) data1_out_grad.grad_.back_.get())->get_content()->buf;
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[0], 1);
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[1], 2);
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[2], 3);
@@ -180,7 +180,7 @@ TEST(CpuBackendIntegration, Diff) {
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[5], 6);
 
 	auto data2_out_grad = grads.at(data2n_id);
-	auto data2_out_grad_buf = ((cpu_tensor*) data2_out_grad.back_.get())->get_content()->buf;
+	auto data2_out_grad_buf = ((cpu_tensor*) data2_out_grad.grad_.back_.get())->get_content()->buf;
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[0], 9);
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[1], 12);
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[2], 15);
@@ -244,9 +244,9 @@ TEST(CpuBackendIntegration, Diff2) {
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;
 	EXPECT_FLOAT_EQ(buf[0], 78);
 
-	auto& grads = result.grads->at(outn_id);
+	auto& grads = result.grad_system_->at(outn_id);
 	auto data1_out_grad = grads.at(data1n_id);
-	auto data1_out_grad_buf = ((cpu_tensor*) data1_out_grad.back_.get())->get_content()->buf;
+	auto data1_out_grad_buf = ((cpu_tensor*) data1_out_grad.grad_.back_.get())->get_content()->buf;
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[0], 1);
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[1], 2);
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[2], 3);
@@ -255,11 +255,12 @@ TEST(CpuBackendIntegration, Diff2) {
 	EXPECT_FLOAT_EQ(data1_out_grad_buf[5], 6);
 
 	auto data2_out_grad = grads.at(data2n_id);
-	auto data2_out_grad_buf = ((cpu_tensor*) data2_out_grad.back_.get())->get_content()->buf;
+	auto data2_out_grad_buf = ((cpu_tensor*) data2_out_grad.grad_.back_.get())->get_content()->buf;
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[0], 9);
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[1], 12);
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[2], 15);
 }
+
 
 }
 

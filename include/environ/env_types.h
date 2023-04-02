@@ -2,9 +2,13 @@
 
 #include <cstdint>
 
+#include <cstdlib>
+#include <exception>
 #include <memory>
 #include <rep/rep_types.h>
+#include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
 namespace plearn::env {
 
@@ -74,12 +78,19 @@ namespace plearn::env {
 			shape_t in_shape;
 			shape_t out_shape;
 			
-			bool identity{false};
+			/* bool identity{false}; */
 
-			shared_ptr<tensor_back_t> back_;
+			shared_ptr<tensor_back_t> back_{};
+	};
+
+	struct node_grad {
+		node_id in_id_;
+		node_id out_id_;
+		gradient grad_;
+		bool identity_{false};
 	};
 	
-	using grad_map = unordered_map<node_id, gradient>;
+	using grad_map = unordered_map<node_id, node_grad>;
 	const grad_map empty_grad_map{};
 
 	struct grad_system : public unordered_map<node_id, grad_map> {
@@ -101,21 +112,54 @@ namespace plearn::env {
 	};
 
 	struct exec_result {
-		bool success{true};
-		borrowed_ptr<grad_system> grads;
+		bool success_{true};
+		borrowed_ptr<grad_system> grad_system_;
 	};
 
 
-	class backend_t {
+
+	class op_exec_backend_t {
 		public:
 			virtual void exec_op(const operation& op, 
 					const vector<tensor_p>& inputs, tensor_p& output) = 0;
-			
-			virtual void calc_forward_grad(const operation& op,
-					const vector<tensor_p>& inputs, const tensor_p& output,
-					const vector<read_ptr<grad_map>>& in_grads, grad_map& out_grad) = 0;
 
+			virtual ~op_exec_backend_t() = default;
+	};
+
+
+	class fp_op_diff_backend_t {
+		public:
+			virtual void reset(const vector<tensor_p>& inputs, const tensor_p& output) {
+				this->inputs_ = &inputs;
+				this->output_ = &output;
+			}
+			virtual void update_grad_with_identity(unsigned input_idx, 
+					gradient& var_out_grad) { 
+				(void)input_idx;
+				(void)var_out_grad;
+				throw std::runtime_error("unimplemented"); 
+			}
+			virtual void update_grad(unsigned input_idx, 
+					const gradient& var_in_grad, gradient& var_out_grad) = 0;
+		
+		protected:
+			read_ptr<vector<tensor_p>> inputs_;
+			read_ptr<tensor_p> output_;
+	};
+
+
+	class fp_diff_backend_t {
+		public:
+			virtual unique_ptr<fp_op_diff_backend_t> create_op_diff_backend(const operation& op) = 0;
+
+			virtual ~fp_diff_backend_t() = default;
+	};
+
+
+	class backend_t : public op_exec_backend_t, public fp_diff_backend_t {
+		public:
 			virtual unique_ptr<tensor_back_t> create_tensor(const shape_t& s) = 0;
+
 			virtual ~backend_t() = default;
 	};
 

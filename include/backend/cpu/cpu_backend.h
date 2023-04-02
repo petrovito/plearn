@@ -21,7 +21,7 @@ namespace plearn::backend::cpu {
 				cpu_tensor* out = static_cast<cpu_tensor*>(output->back());
 				vector<cpu_tensor*> in(inputs.size());
 				std::transform(inputs.begin(), inputs.end(), in.begin(), 
-						[](tensor_p p) { return static_cast<cpu_tensor*>(p->back()); });
+						[](auto& p) { return static_cast<cpu_tensor*>(p->back()); });
 
 				switch (op.type_) {
 					case op_type::noop:
@@ -44,36 +44,17 @@ namespace plearn::backend::cpu {
 				return unique_ptr<cpu_tensor>(tens);
 			}
 
-			void calc_forward_grad(
-					const operation& op, 
-					const vector<tensor_p>& inputs,
-					const tensor_p& output,
-					const vector<read_ptr<grad_map>>& in_grads, 
-					grad_map& out_grad
+			unique_ptr<fp_op_diff_backend_t> create_op_diff_backend(
+					const operation& op 
 			) override {
-				//for each variable node calculate the gradient, using the chain rule:
-				//   the derivative of the op and the gradients of the inputs
-				//NOTE: if a var node is present in the output map, 
-				//then some of the inputs are dependant on that var node
-				/* for (auto& [varn_id, out_grad] : out_grad) { */
-				/* 	for (unsigned i = 0; i < in_grads.size(); ++i) { */
-				/* 		if (!in_grads[i]->contains(varn_id)) continue; */
-				/* 		auto& in_grad = in_grads[i]->at(varn_id); */
-				/* 		//TODO */
-				/* 	} */
-				/* } */
-
-				//TODO
 				switch (op.type_) {
 					case op_type::noop:
 					case op_type::identity: //TODO
 						break;
 					case op_type::matmul:
-						cpu_matmul_grad(op, inputs, output, in_grads, out_grad);
-						break;
+						return std::make_unique<cpu_fp_matmul>();
 					case op_type::vecmatmul:
-						cpu_vecmatmul_grad(op, inputs, output, in_grads, out_grad);
-						break;
+						return std::make_unique<cpu_fp_vecmatmul>();
 					case op_type::add:
 						break;
 				}

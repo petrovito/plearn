@@ -27,9 +27,9 @@ class MockBackend : public backend_t {
 			return std::make_unique<MockTensorBack>();
 		}
 
-		void calc_forward_grad(const operation& ,
-				const vector<tensor_p>& , const tensor_p& ,
-				const vector<read_ptr<grad_map>>& , grad_map& ) override {};
+		unique_ptr<fp_op_diff_backend_t> create_op_diff_backend(
+				const operation&  ) override { return nullptr; }
+
 };
 
 class MockExecEnv : public exec_env {
@@ -75,7 +75,7 @@ TEST(EnvSection, Execute) {
 
 	EXPECT_CALL(*mock_backend, exec_op(_, _, _)).Times(2);
 	auto result = section.execute(params);
-	ASSERT_TRUE(result.success);
+	ASSERT_TRUE(result.success_);
 
 	ASSERT_EQ(params.outputs_[outn_id]->shape(), shape_t{10});
 }

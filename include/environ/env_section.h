@@ -93,7 +93,6 @@ namespace plearn::env {
 	/**
 	 * A section is a component that is responsible for managing resources for operations 
 	 * on a call graph, i.e. execution/differentials.
-	 * Resource typically means memory.
 	 */
 	class env_section {
 		public:
@@ -118,7 +117,8 @@ namespace plearn::env {
 				section_executor exec{params, cg_, fp_diff_env_.get(), backend_, tensors};
 				exec.execute();
 
-				return {.success=true, .grads=fp_diff_env_->gradients()};
+				auto grads = fp_diff_env_->gradients();
+				return {.success_=true, .grad_system_=grads};
 			}
 			
 

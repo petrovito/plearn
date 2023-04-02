@@ -47,10 +47,10 @@ namespace plearn::backend::cpu {
 			void zero() override { std::fill_n(content_->buf, shape_.size(), 0.f); }
 
 		private:
-			cpu_tensor(shape_t shape, const shared_ptr<tensor_buf>& buf) :
+			cpu_tensor(const shape_t& shape, const shared_ptr<tensor_buf>& buf) :
 				shape_{shape}, content_{buf} {}
 
-			shape_t shape_;
+			const shape_t shape_;
 			shared_ptr<tensor_buf> content_;
 
 		friend class cpu_tensor_factory;
