@@ -2,7 +2,7 @@
 
 #include "backend/cpu/cpu_types.h"
 #include "backend/cpu/cpu_backend.h"
-#include <backend/cpu/cpu_chain_grad.h>
+#include <backend/cpu/cpu_fp_grad.h>
 
 namespace plearn::backend::cpu {
 

@@ -11,7 +11,7 @@
 
 #include <rep/rep_types.h>
 #include <rep/call_graph.h>
-#include <rep/forward_prop.h>
+#include <rep/diff_info.h>
 #include <environ/env_types.h>
 #include <environ/exec_env.h>
 
@@ -88,7 +88,7 @@ namespace plearn::env {
 						continue; //skip input nodes
 					grad_system_.insert({tens_id, {}});
 					auto& out_shape = cg_.flow_nodes_.at(tens_id).shape_;
-					for (auto& var_id: fp_diff_->derivatives().at(tens_id).variable_dependencies()) {
+					for (auto& var_id: fp_diff_->dependencies().at(tens_id).variable_dependencies()) {
 						auto& var_shape = cg_.data_nodes_.at(var_id).shape_;
 						auto grad_shape = var_shape*out_shape;
 						auto back_t =backend_->create_tensor(grad_shape).release();

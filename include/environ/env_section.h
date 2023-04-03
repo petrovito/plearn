@@ -11,7 +11,7 @@
 #include <rep/call_graph.h>
 #include <rep/call_graph_runner.h>
 #include <algorithm>
-#include <rep/forward_prop.h>
+#include <rep/diff_info.h>
 #include <environ/env_types.h>
 #include <environ/exec_env.h>
 #include <environ/diff_env.h>
@@ -140,7 +140,7 @@ namespace plearn::env {
 				diff_info_builder builder{cg_};
 				fp_diff_ = builder
 					.all_data_nodes()
-					.find_depending_tensors()
+					.find_dependencies()
 					.build();
 				fp_diff_env_ = std::make_unique<fp_diff_env>(cg_, fp_diff_.get(), backend_);
 				fp_diff_env_->init();

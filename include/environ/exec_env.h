@@ -9,7 +9,7 @@
 
 #include <rep/rep_types.h>
 #include <rep/call_graph.h>
-#include <rep/forward_prop.h>
+#include <rep/diff_info.h>
 #include <environ/env_types.h>
 
 namespace plearn::env {

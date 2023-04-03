@@ -47,8 +47,7 @@ if (PLEARN_TEST)
 		test/cmpl/layer_test.cpp
 
 		test/rep/call_graph_test.cpp
-		test/rep/forward_prop_test.cpp
-		test/rep/backward_prop_test.cpp
+		test/rep/diff_info_test.cpp
 
 		test/environ/exec_env_test.cpp
 		test/environ/diff_env_test.cpp
