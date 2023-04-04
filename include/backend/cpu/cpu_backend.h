@@ -44,7 +44,7 @@ namespace plearn::backend::cpu {
 				return unique_ptr<cpu_tensor>(tens);
 			}
 
-			unique_ptr<fp_op_diff_backend_t> create_op_fw_diff_backend(
+			unique_ptr<fw_op_diff_backend_t> create_op_fw_diff_backend(
 					const operation& op 
 			) override {
 				switch (op.type_) {
@@ -61,7 +61,7 @@ namespace plearn::backend::cpu {
 				throw std::runtime_error("Not implemented");
 			}
 
-			unique_ptr<fp_op_diff_backend_t> create_op_bw_diff_backend(
+			unique_ptr<bw_op_diff_backend_t> create_op_bw_diff_backend(
 					const operation& op 
 			) override {
 				throw std::runtime_error("Not implemented");

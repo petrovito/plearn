@@ -17,6 +17,9 @@
 
 namespace plearn::env {
 
+
+	//NOTE: THIS IS ARCHIVED CODE. IT IS NOT USED ANYMORE.
+
 	using diff_cache = tensor_p;
 
 	struct diff_cache_info {
@@ -25,10 +28,10 @@ namespace plearn::env {
 	};
 
 
-	class op_diff_env {
+	class fp_op_diff_env {
 		public:
-			op_diff_env(
-					unique_ptr<fp_op_diff_backend_t>&& diff_backend,
+			fp_op_diff_env(
+					unique_ptr<fw_op_diff_backend_t>&& diff_backend,
 					vector<borrowed_ptr<grad_map>>&& in_grad_maps,
 					borrowed_ptr<grad_map> out_grads
 					) :
@@ -54,7 +57,7 @@ namespace plearn::env {
 			}
 
 		private:
-			unique_ptr<fp_op_diff_backend_t> diff_backend_;
+			unique_ptr<fw_op_diff_backend_t> diff_backend_;
 			
 			/* diff_cache cache_; */
 			const vector<borrowed_ptr<grad_map>> in_grad_maps_;
@@ -104,7 +107,7 @@ namespace plearn::env {
 							[this](auto in_id) { return &grad_system_[in_id]; });
 					auto& out_grad_map = grad_system_[opn.out_];
 					auto diff_backend = backend_->create_op_fw_diff_backend(op);
-					op_diff_envs_[opn_id] = std::make_unique<op_diff_env>(
+					op_diff_envs_[opn_id] = std::make_unique<fp_op_diff_env>(
 							std::move(diff_backend), std::move(in_grad_maps), &out_grad_map);
 				}
 			}
@@ -129,7 +132,7 @@ namespace plearn::env {
 			borrowed_ptr<diff_info> fp_diff_;
 			borrowed_ptr<backend_t> backend_;
 
-			unordered_map<op_node_id, unique_ptr<op_diff_env>> op_diff_envs_;
+			unordered_map<op_node_id, unique_ptr<fp_op_diff_env>> op_diff_envs_;
 			grad_system grad_system_;
 	};
 

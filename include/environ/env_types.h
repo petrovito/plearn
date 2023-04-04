@@ -127,7 +127,7 @@ namespace plearn::env {
 	};
 
 
-	class fp_op_diff_backend_t {
+	class fw_op_diff_backend_t {
 		public:
 			virtual void reset(const vector<tensor_p>& inputs, const tensor_p& output) {
 				this->inputs_ = &inputs;
@@ -147,7 +147,7 @@ namespace plearn::env {
 			read_ptr<tensor_p> output_;
 	};
 
-	class bp_op_diff_backend_t {
+	class bw_op_diff_backend_t {
 		public:
 			virtual void reset(const vector<tensor_p>& inputs, const tensor_p& output) {
 				this->inputs_ = &inputs;
@@ -169,14 +169,16 @@ namespace plearn::env {
 
 	class bp_diff_backend_t {
 		public:
-			virtual unique_ptr<fp_op_diff_backend_t> create_op_bw_diff_backend(const operation& op) = 0;
+			[[nodiscard]]
+			virtual unique_ptr<bw_op_diff_backend_t> create_op_bw_diff_backend(const operation& op) = 0;
 
 			virtual ~bp_diff_backend_t() = default;
 	};
 
 	class fp_diff_backend_t {
 		public:
-			virtual unique_ptr<fp_op_diff_backend_t> create_op_fw_diff_backend(const operation& op) = 0;
+			[[nodiscard]]
+			virtual unique_ptr<fw_op_diff_backend_t> create_op_fw_diff_backend(const operation& op) = 0;
 
 			virtual ~fp_diff_backend_t() = default;
 	};
@@ -184,6 +186,7 @@ namespace plearn::env {
 
 	class backend_t : public op_exec_backend_t, public fp_diff_backend_t, public bp_diff_backend_t {
 		public:
+			[[nodiscard]]
 			virtual unique_ptr<tensor_back_t> create_tensor(const shape_t& s) = 0;
 
 			virtual ~backend_t() = default;

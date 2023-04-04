@@ -1,8 +1,9 @@
-#include "rep/rep_types.h"
 #include <gmock/gmock-function-mocker.h>
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
+#include "backend_mocks.h"
+
+#include "rep/rep_types.h"
 #include <environ/env_types.h>
 #include <environ/env_section.h>
 #include <environ/exec_env.h>
@@ -12,37 +13,6 @@ namespace plearn::env {
 
 using ::testing::_;
 
-class MockTensorBack : public tensor_back_t {
-	public:
-		void zero() override {};
-};
-
-class MockBackend : public backend_t {
-	public:
-		MOCK_METHOD(void, exec_op,
-				(const operation& op, const vector<tensor_p>& inputs, tensor_p& output)
-				, (override));
-
-		unique_ptr<tensor_back_t> create_tensor(const shape_t&) override {
-			return std::make_unique<MockTensorBack>();
-		}
-
-		unique_ptr<fp_op_diff_backend_t> create_op_fw_diff_backend(
-				const operation&  ) override { return nullptr; }
-
-		unique_ptr<fp_op_diff_backend_t> create_op_bw_diff_backend(
-				const operation&  ) override { return nullptr; }
-
-};
-
-class MockExecEnv : public exec_env {
-	public:
-		MockExecEnv(backend_t* backend) : exec_env(backend) {}
-		tensor_p create_tensor(const shape_t& s) override {
-			auto back_tensor = std::make_unique<MockTensorBack>();
-			return tens_fac_.create(s, std::move(back_tensor));
-		}
-};
 
 
 

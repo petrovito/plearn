@@ -14,7 +14,7 @@
 #include <rep/diff_info.h>
 #include <environ/env_types.h>
 #include <environ/exec_env.h>
-#include <environ/diff_env.h>
+#include <environ/fp_diff_env.h>
 
 namespace plearn::env {
 

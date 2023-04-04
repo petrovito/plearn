@@ -64,7 +64,7 @@ namespace plearn::rep {
 			return deps;
 		}
 
-		bool has_non_trivial_deps() {
+		bool has_non_trivial_deps() const {
 			for (auto& [id, grad]: variable_deps_) {
 				if (!grad.identity_ && !grad.independent_)
 					return true;
@@ -72,7 +72,7 @@ namespace plearn::rep {
 			return false;
 		}
 
-		bool output_dependant(node_id outn_id) {
+		bool output_dependant(node_id outn_id) const {
 			return !output_deps_.at(outn_id).independent_;
 		}
 
@@ -84,7 +84,7 @@ namespace plearn::rep {
 			return false;
 		}
 
-		unordered_set<node_id> dependant_output_nodes() {
+		unordered_set<node_id> dependant_output_nodes() const {
 			unordered_set<node_id> deps{};
 			for (auto& [id, grad]: output_deps_) {
 				if (!grad.independent_) deps.insert(id);

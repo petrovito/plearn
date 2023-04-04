@@ -9,7 +9,7 @@
 
 namespace plearn::backend::cpu {
 
-class cpu_fp_matmul : public fp_op_diff_backend_t {
+class cpu_fp_matmul : public fw_op_diff_backend_t {
 	void update_grad(unsigned input_idx,
 			const gradient& var_in_grad,  gradient& var_out_grad) override {
 		auto var_in_grad_buf = ((cpu_tensor*)var_in_grad.back_.get())->get_content()->buf;
@@ -98,7 +98,7 @@ class cpu_fp_matmul : public fp_op_diff_backend_t {
 
 
 
-class cpu_fp_vecmatmul : public fp_op_diff_backend_t {
+class cpu_fp_vecmatmul : public fw_op_diff_backend_t {
 	void update_grad(unsigned input_idx,
 			const gradient& var_in_grad,  gradient& var_out_grad) override {
 		auto var_in_grad_buf = ((cpu_tensor*)var_in_grad.back_.get())->get_content()->buf;
