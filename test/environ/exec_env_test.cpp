@@ -40,7 +40,13 @@ TEST(EnvSection, Execute) {
 		data_tensors[id] = mock_env->create_tensor(node.shape_);
 	}
 	
-	env_section section{mock_env.get(), mock_backend.get(), cg, std::move(data_tensors)};
+	env_section_builder builder{mock_env.get(), mock_backend.get(), cg};
+	auto section = builder
+		.set_data_tensors(std::move(data_tensors))
+		.allocate_internal_tensors()
+		.create_diff_info()
+		.create_fp_diff()
+		.build();
 
 	exec_params params;
 	params.inputs_[inn_id] = mock_env->create_tensor(shape_t{768});

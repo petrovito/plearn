@@ -53,7 +53,13 @@ TEST(CpuBackendIntegration, Execute) {
 		buf[1] = 2;
 	}
 
-	env_section section{env.get(), backend.get(), cg, std::move(data_tensors)};
+	env_section_builder section_builder{env.get(), backend.get(), cg};
+	auto section = section_builder
+		.allocate_internal_tensors()
+		.set_data_tensors(std::move(data_tensors))
+		.build();
+
+	
 
 	{
 	exec_params params;
@@ -83,7 +89,7 @@ TEST(CpuBackendIntegration, Execute) {
 }
 
 
-TEST(CpuBackendIntegration, Diff) {
+TEST(CpuBackendIntegration, DiffFw) {
 	call_graph_builder cg_builder;
 
 	auto inn_id = cg_builder.add_input_node(shape_t{2});
@@ -127,7 +133,13 @@ TEST(CpuBackendIntegration, Diff) {
 		buf[1] = 2;
 	}
 
-	env_section section{env.get(), backend.get(), cg, std::move(data_tensors)};
+	env_section_builder section_builder{env.get(), backend.get(), cg};
+	auto section = section_builder
+		.allocate_internal_tensors()
+		.set_data_tensors(std::move(data_tensors))
+		.create_diff_info()
+		.create_fp_diff()
+		.build();
 
 	{
 	exec_params params{.calc_diffs = true};
@@ -188,7 +200,7 @@ TEST(CpuBackendIntegration, Diff) {
 }
 
 
-TEST(CpuBackendIntegration, Diff2) {
+TEST(CpuBackendIntegration, DiffFw2) {
 	call_graph_builder cg_builder;
 
 	auto inn_id = cg_builder.add_input_node(shape_t{1,2});
@@ -232,7 +244,13 @@ TEST(CpuBackendIntegration, Diff2) {
 		buf[1] = 2;
 	}
 
-	env_section section{env.get(), backend.get(), cg, std::move(data_tensors)};
+	env_section_builder section_builder{env.get(), backend.get(), cg};
+	auto section = section_builder
+		.allocate_internal_tensors()
+		.set_data_tensors(std::move(data_tensors))
+		.create_diff_info()
+		.create_fp_diff()
+		.build();
 
 	exec_params params{.calc_diffs = true};
 	params.inputs_[inn_id] = input_ten;

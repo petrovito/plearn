@@ -1,5 +1,6 @@
 #pragma once
 
+#include "environ/bw_diff_env.h"
 #include <bits/ranges_algo.h>
 #include <cassert>
 #include <cstdint>
@@ -55,7 +56,7 @@ namespace plearn::env {
 	class section_executor {
 		public:
 			section_executor(const exec_params& params,
-					const call_graph& cg, borrowed_ptr<fp_diff_env> diff_env,
+					const call_graph& cg, borrowed_ptr<diff_env> diff_env,
 					const borrowed_ptr<backend_t> backend, 
 					section_exec_tensors& tensors) : 
 				params_{params}, cg_{cg}, diff_env_{diff_env}, 
@@ -85,7 +86,7 @@ namespace plearn::env {
 		private:
 			const exec_params& params_;
 			const call_graph& cg_;
-			borrowed_ptr<fp_diff_env> diff_env_;
+			borrowed_ptr<diff_env> diff_env_;
 			borrowed_ptr<backend_t> backend_;
 			section_exec_tensors& tensors_;
 	};
@@ -98,57 +99,47 @@ namespace plearn::env {
 		public:
 			env_section(borrowed_ptr<exec_env> env, borrowed_ptr<backend_t> backend,
 					const call_graph& cg,
-					const hash_map<node_id, tensor_p>& data_tensors) :  
-				cg_{cg}, env_{env}, backend_{backend}, data_tensors_{data_tensors} {
-					allocate_internal_tensors();
-					create_fp_diff();
-				}
+					const hash_map<node_id, tensor_p>& data_tensors,
+					section_resources&& resources,
+					unique_ptr<diff_env>&& diff_env,
+					unique_ptr<diff_info>&& diff_info
+					):
+				cg_{cg}, env_{env}, backend_{backend},
+				data_tensors_{data_tensors}, 
+				resources_{std::move(resources)},
+				diff_env_{std::move(diff_env)},
+				diff_info_{std::move(diff_info)} {}
 
 			exec_result execute(exec_params& params) {
 				//prepare run
 				reset_internal_tensors();
 				if (params.calc_diffs) {
-					fp_diff_env_->reset();
+					diff_env_->reset();
 				}
 				section_exec_tensors tensors{resources_.internal_tensors_, data_tensors_,
 					params.inputs_, params.outputs_};
 				
 				//start run
-				section_executor exec{params, cg_, fp_diff_env_.get(), backend_, tensors};
+				section_executor exec{params, cg_, diff_env_.get(), backend_, tensors};
 				exec.execute();
 
-				auto grads = fp_diff_env_->gradients();
-				return {.success_=true, .grad_system_=grads};
+				exec_result result{.success_=true};
+				if (params.calc_diffs)
+					result.grad_system_ = diff_env_->get_grad_system();
+				return result;
 			}
 			
 
 		private:
-			void allocate_internal_tensors() {
-				for (auto intn_id: cg_.internal_nodes_) {
-					auto& node = cg_.flow_nodes_.at(intn_id);
-					resources_.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
-				}
-			}
-
 			void reset_internal_tensors() {
 				for (auto& [id, tens]: resources_.internal_tensors_) {
 					tens->back()->zero();
 				}
 			}
 
-			void create_fp_diff() {
-				diff_info_builder builder{cg_};
-				fp_diff_ = builder
-					.all_data_nodes()
-					.find_dependencies()
-					.build();
-				fp_diff_env_ = std::make_unique<fp_diff_env>(cg_, fp_diff_.get(), backend_);
-				fp_diff_env_->init();
-			}
-
 			const call_graph& cg_;
-			unique_ptr<diff_info> fp_diff_;
-			unique_ptr<fp_diff_env> fp_diff_env_;
+			unique_ptr<diff_info> diff_info_;
+			unique_ptr<diff_env> diff_env_;
 			borrowed_ptr<exec_env> env_;
 			borrowed_ptr<backend_t> backend_;
 
@@ -156,6 +147,63 @@ namespace plearn::env {
 			section_resources resources_;
 
 			friend class EnvSection_Execute_Test;
+	};
+
+	class env_section_builder {
+		public:
+			env_section_builder(borrowed_ptr<exec_env> env, borrowed_ptr<backend_t> backend,
+					const call_graph& cg) :  
+				cg_{cg}, env_{env}, backend_{backend} {}
+
+			env_section_builder& set_data_tensors(const hash_map<node_id, tensor_p>& data_tensors) {
+				data_tensors_ = data_tensors;
+				return *this;
+			}
+
+			env_section_builder& allocate_internal_tensors() {
+				for (auto intn_id: cg_.internal_nodes_) {
+					auto& node = cg_.flow_nodes_.at(intn_id);
+					resources_.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
+				}
+				return *this;
+			}
+
+			env_section_builder& create_diff_info() {
+				diff_info_builder builder{cg_};
+				diff_info_ = builder
+					.all_data_nodes()
+					.find_dependencies()
+					.build();
+				return *this;
+			}
+
+			env_section_builder& create_fp_diff() {
+				diff_env_ = std::make_unique<fp_diff_env>(cg_, diff_info_.get(), backend_);
+				((fp_diff_env*)diff_env_.get())->init();
+				return *this;
+			}
+
+			env_section_builder& create_bw_diff() {
+				bw_diff_env_builder builder{cg_, diff_info_.get(), backend_};
+				diff_env_ = builder.allocate_grad_tensors().build();
+				return *this;
+			}
+
+
+			env_section build() {
+				return env_section{env_, backend_, cg_, data_tensors_, 
+					std::move(resources_), std::move(diff_env_), std::move(diff_info_)};
+			}
+		private:
+			const call_graph& cg_;
+			borrowed_ptr<exec_env> env_;
+			borrowed_ptr<backend_t> backend_;
+			hash_map<node_id, tensor_p> data_tensors_;
+			unique_ptr<diff_info> diff_info_;
+			unique_ptr<diff_env> diff_env_;
+
+			section_resources resources_;
+
 	};
 
 }

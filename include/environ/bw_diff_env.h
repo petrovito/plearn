@@ -49,7 +49,7 @@ namespace plearn::env {
 	};
 
 
-	class bw_diff_env {
+	class bw_diff_env : public diff_env {
 		public:
 			bw_diff_env(
 					const call_graph& cg,
@@ -61,7 +61,7 @@ namespace plearn::env {
 				cg_(cg), diff_info_(diff_info), backend_(backend),
 				op_diff_envs_(std::move(op_diff_envs)), grad_system_(std::move(grad_system)) {}
 
-			void reset() {
+			void reset() override {
 				for (auto& [nid, grad_map] : grad_system_) {
 					//dont reset outnodes
 					if (std::ranges::count(cg_.out_nodes_, nid)) continue;
@@ -71,11 +71,12 @@ namespace plearn::env {
 				}
 			}
 
-			void calc_diff(const op_node& opn, const vector<tensor_p>& inputs, const tensor_p& output) {
+			void calc_diff(const op_node& opn, 
+					const vector<tensor_p>& inputs, const tensor_p& output) override {
 				op_diff_envs_[opn.id_]->execute(inputs, output);
 			}
 
-			borrowed_ptr<grad_system> get_grad_system() { return &grad_system_; }
+			borrowed_ptr<grad_system> get_grad_system() override { return &grad_system_; }
 
 		private:
 			const call_graph& cg_;

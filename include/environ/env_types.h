@@ -5,10 +5,12 @@
 #include <cstdlib>
 #include <exception>
 #include <memory>
-#include <rep/rep_types.h>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+
+#include <rep/rep_types.h>
+#include "rep/call_graph.h"
 
 namespace plearn::env {
 
@@ -113,9 +115,17 @@ namespace plearn::env {
 
 	struct exec_result {
 		bool success_{true};
-		borrowed_ptr<grad_system> grad_system_;
+		borrowed_ptr<grad_system> grad_system_{nullptr};
 	};
 
+
+	class diff_env {
+		public:
+			virtual void calc_diff(const op_node& opn, const vector<tensor_p>& inputs, const tensor_p& output) = 0;
+			virtual void reset() = 0;
+			virtual borrowed_ptr<grad_system> get_grad_system() = 0;
+			virtual ~diff_env() = default;
+	};
 
 
 	class op_exec_backend_t {

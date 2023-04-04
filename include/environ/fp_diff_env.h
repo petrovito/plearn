@@ -66,7 +66,7 @@ namespace plearn::env {
 
 
 
-	class fp_diff_env {
+	class fp_diff_env : public diff_env {
 		public:
 			fp_diff_env(
 					const call_graph& cg,
@@ -112,7 +112,7 @@ namespace plearn::env {
 				}
 			}
 
-			void reset() {
+			void reset() override {
 				for (auto& [_, grad_map]: grad_system_) {
 					for (auto& [__, node_grad]: grad_map) {
 						if (node_grad.grad_.back_)
@@ -121,11 +121,12 @@ namespace plearn::env {
 				}
 			}
 
-			void calc_diff(const op_node& opn, const vector<tensor_p>& inputs, const tensor_p& output) {
+			void calc_diff(const op_node& opn,
+					const vector<tensor_p>& inputs, const tensor_p& output) override {
 				op_diff_envs_[opn.id_]->execute(inputs, output);
 			}
 
-		borrowed_ptr<grad_system> gradients() { return &grad_system_; }
+		borrowed_ptr<grad_system> get_grad_system() override { return &grad_system_; }
 
 		private:
 			const call_graph& cg_;
