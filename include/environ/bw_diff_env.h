@@ -22,7 +22,7 @@ namespace plearn::env {
 			bw_op_diff_env(
 					unique_ptr<bw_op_diff_backend_t>&& diff_backend,
 					read_ptr<grad_map> out_grad_map,
-					vector<borrowed_ptr<grad_map>> in_grad_maps
+					vector<borrowed_ptr<grad_map>>&& in_grad_maps
 					) :
 				diff_backend_(std::move(diff_backend)),
 				out_grad_map_(out_grad_map),
@@ -33,7 +33,13 @@ namespace plearn::env {
 					const tensor_p& output
 					) {
 				diff_backend_->reset(inputs, output);
-				//TODO
+				for (unsigned in_idx = 0; in_idx < in_grad_maps_.size(); ++in_idx) {
+					auto& in_grad_map = in_grad_maps_[in_idx];
+					for (auto& [outn_id, in_outn_grad] : *in_grad_map) {
+						auto& out_outn_grad = out_grad_map_->at(outn_id);
+						diff_backend_->update_grad(in_idx, out_outn_grad.grad_, in_outn_grad.grad_);
+					}
+				}
 			}
 		private:
 			unique_ptr<bw_op_diff_backend_t> diff_backend_;

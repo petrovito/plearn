@@ -37,12 +37,24 @@ class MockBackend : public backend_t {
 
 class MockExecEnv : public exec_env {
 	public:
+		MockExecEnv() : exec_env(nullptr) {};
 		MockExecEnv(backend_t* backend) : exec_env(backend) {}
 		tensor_p create_tensor(const shape_t& s) override {
 			auto back_tensor = std::make_unique<MockTensorBack>(s);
 			return tens_fac_.create(s, std::move(back_tensor));
 		}
 
+};
+
+
+class MockBwOpDiffBackend : public bw_op_diff_backend_t {
+	public:
+		MOCK_METHOD(void, reset,
+				(const vector<tensor_p>& inputs, const tensor_p& output)
+				, (override));
+		MOCK_METHOD(void, update_grad,
+				(unsigned input_idx, const gradient& out_grad, gradient& var_out_grad)
+				, (override));
 };
 
 

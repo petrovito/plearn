@@ -160,7 +160,8 @@ namespace plearn::env {
 			/* 	throw std::runtime_error("unimplemented"); */ 
 			/* } */
 			virtual void update_grad(unsigned input_idx, 
-					const gradient& out_grad, gradient& var_out_grad) = 0;
+					const gradient& out_outn_grad, gradient& in_outn_grad) = 0;
+			virtual ~bw_op_diff_backend_t() = default;
 		
 		protected:
 			read_ptr<vector<tensor_p>> inputs_;

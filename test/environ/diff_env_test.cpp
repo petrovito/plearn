@@ -1,15 +1,20 @@
+#include <algorithm>
+#include <gmock/gmock-spec-builders.h>
 #include <gtest/gtest.h>
 
 #include "backend_mocks.h"
 
+#include "environ/env_types.h"
 #include "rep/call_graph.h"
 #include "rep/diff_info.h"
+#include "rep/rep_types.h"
 #include <environ/fp_diff_env.h>
 #include <environ/bw_diff_env.h>
+#include <memory>
 
 namespace plearn::env {
 
-
+using testing::_;
 
 TEST(BwDiffEnv, Builder) {
 	call_graph_builder cg_builder;
@@ -55,6 +60,39 @@ TEST(BwDiffEnv, Builder) {
 
 	//TODO test identity of outn grad
 	//TODO test op diff envs?
+}
+
+TEST(BwDiffEnv, OpDiffEnvExecute) {
+	auto exec_env = MockExecEnv();
+	unique_ptr<MockBwOpDiffBackend> mock_diff_backend = std::make_unique<MockBwOpDiffBackend>();
+	
+	node_id outn_id = 999;
+
+	grad_map out_grad_map;
+	shape_t out_shape{2, 1};
+	out_grad_map[outn_id] = {3, outn_id, {out_shape, {1}}};
+
+	vector<grad_map*> in_grad_maps;
+	auto in_grad_map1 = std::make_unique<grad_map>();
+	shape_t in1_shape{2, 3};
+	(*in_grad_map1)[outn_id] = {1, outn_id, {in1_shape, {1}}};
+	in_grad_maps.push_back(in_grad_map1.get());
+
+	auto in_grad_map2 = std::make_unique<grad_map>();
+	shape_t in2_shape{3, 1};
+	(*in_grad_map2)[outn_id] = {2, outn_id, {in2_shape, {1}}};
+	in_grad_maps.push_back(in_grad_map2.get());
+
+	EXPECT_CALL(*mock_diff_backend, reset(_,_));
+	EXPECT_CALL(*mock_diff_backend, update_grad(_,_,_)).Times(2);
+
+	bw_op_diff_env bw_op_de{std::move(mock_diff_backend), &out_grad_map, std::move(in_grad_maps)};
+
+	auto in1 = exec_env.create_tensor(shape_t{2, 3});
+	auto in2 = exec_env.create_tensor(shape_t{3, 1});
+	auto out = exec_env.create_tensor(shape_t{2, 1});
+
+	bw_op_de.execute({in1, in2}, out);
 }
 
 }
