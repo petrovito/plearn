@@ -1,6 +1,5 @@
 #pragma once
 
-#include "environ/bw_diff_env.h"
 #include <bits/ranges_algo.h>
 #include <cassert>
 #include <cstdint>
@@ -16,6 +15,7 @@
 #include <environ/env_types.h>
 #include <environ/exec_env.h>
 #include <environ/fp_diff_env.h>
+#include "environ/bw_diff_env.h"
 
 namespace plearn::env {
 
@@ -31,35 +31,16 @@ namespace plearn::env {
 	};
 
 	/**
-	 * Container for all the tensors that are required for call graph executions.
-	 */
-	struct section_exec_tensors {
-		template<typename... Args>
-		section_exec_tensors(
-				hash_map<node_id, tensor_p>& tensors,
-				Args&&... other_tens
-
-				) :
-			tensors_{tensors} {
-				(tensors_.insert(other_tens.begin(), other_tens.end()), ...);
-
-			}
-		hash_map<node_id, tensor_p> tensors_;
-
-		tensor_p& operator[](node_id id) { return tensors_[id]; }
-	};
-
-	/**
 	 * The class responsible ONLY for executing a call graph.
 	 * Has all the resources required provided by some other component.
 	 */
 	class section_executor {
 		public:
 			section_executor(const exec_params& params,
-					const call_graph& cg, borrowed_ptr<diff_env> diff_env,
+					const call_graph& cg, 
 					const borrowed_ptr<backend_t> backend, 
 					section_exec_tensors& tensors) : 
-				params_{params}, cg_{cg}, diff_env_{diff_env}, 
+				params_{params}, cg_{cg},
 				backend_{backend}, tensors_{tensors} {}
 
 			void execute() {
@@ -73,10 +54,6 @@ namespace plearn::env {
 					tensor_p output = tensors_[opn.out_];
 					//execute operation
 					backend_->exec_op(op, inputs, output);
-					//calculate derivatives if required
-					if (params_.calc_diffs) {
-						diff_env_->calc_diff(opn, inputs, output);
-					}
 				});
 
 				vector<tensor_p> outputs(cg_.out_nodes_.size());
@@ -86,7 +63,6 @@ namespace plearn::env {
 		private:
 			const exec_params& params_;
 			const call_graph& cg_;
-			borrowed_ptr<diff_env> diff_env_;
 			borrowed_ptr<backend_t> backend_;
 			section_exec_tensors& tensors_;
 	};
@@ -120,12 +96,17 @@ namespace plearn::env {
 					params.inputs_, params.outputs_};
 				
 				//start run
-				section_executor exec{params, cg_, diff_env_.get(), backend_, tensors};
+				section_executor exec{params, cg_, backend_, tensors};
 				exec.execute();
 
 				exec_result result{.success_=true};
-				if (params.calc_diffs)
+
+				//calculate derivatives if required
+				if (params.calc_diffs) {
+					diff_env_->calc_diffs(tensors);
 					result.grad_system_ = diff_env_->get_grad_system();
+				}
+
 				return result;
 			}
 			

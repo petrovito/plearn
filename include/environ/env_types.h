@@ -119,14 +119,6 @@ namespace plearn::env {
 	};
 
 
-	class diff_env {
-		public:
-			virtual void calc_diff(const op_node& opn, const vector<tensor_p>& inputs, const tensor_p& output) = 0;
-			virtual void reset() = 0;
-			virtual borrowed_ptr<grad_system> get_grad_system() = 0;
-			virtual ~diff_env() = default;
-	};
-
 
 	class op_exec_backend_t {
 		public:
@@ -194,11 +186,17 @@ namespace plearn::env {
 			virtual ~fp_diff_backend_t() = default;
 	};
 
+	enum class back_tensor_init_mode {
+		no_init,
+		zero,
+		identity
+	};
 
 	class backend_t : public op_exec_backend_t, public fp_diff_backend_t, public bp_diff_backend_t {
 		public:
 			[[nodiscard]]
-			virtual unique_ptr<tensor_back_t> create_tensor(const shape_t& s) = 0;
+			virtual unique_ptr<tensor_back_t> create_tensor(const shape_t& s,
+					back_tensor_init_mode init=back_tensor_init_mode::no_init) = 0;
 
 			virtual ~backend_t() = default;
 	};
@@ -208,5 +206,36 @@ namespace plearn::env {
 			virtual void zero() = 0; //anull tensor
 			virtual ~tensor_back_t() = default;
 	};
+
+
+
+	/**
+	 * Container for all the tensors that are required for call graph executions.
+	 */
+	struct section_exec_tensors {
+		template<typename... Args>
+		section_exec_tensors(
+				hash_map<node_id, tensor_p>& tensors,
+				Args&&... other_tens
+
+				) :
+			tensors_{tensors} {
+				(tensors_.insert(other_tens.begin(), other_tens.end()), ...);
+
+			}
+		hash_map<node_id, tensor_p> tensors_;
+
+		tensor_p& operator[](node_id id) { return tensors_[id]; }
+	};
+
+	class diff_env {
+		public:
+			virtual void calc_diff(const op_node& opn, const vector<tensor_p>& inputs, const tensor_p& output) = 0;
+			virtual void calc_diffs(section_exec_tensors&) = 0;
+			virtual void reset() = 0;
+			virtual borrowed_ptr<grad_system> get_grad_system() = 0;
+			virtual ~diff_env() = default;
+	};
+
 
 }

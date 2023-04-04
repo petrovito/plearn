@@ -40,8 +40,23 @@ namespace plearn::backend::cpu {
 				}
 			}
 
-			unique_ptr<tensor_back_t> create_tensor(const shape_t& s) override {
-				auto tens = tens_fac_.allocate(s);
+			unique_ptr<tensor_back_t> create_tensor(const shape_t& shape, back_tensor_init_mode init) override {
+				auto tens = tens_fac_.allocate(shape);
+				switch (init) {
+					case back_tensor_init_mode::no_init:
+						break;
+					case back_tensor_init_mode::zero:
+						tens->zero();
+						break;
+					case back_tensor_init_mode::identity:
+						auto buf = tens->get_content()->buf;
+						if (shape.rank != 2 || shape.dims[0] != shape.dims[1])
+							throw std::runtime_error("Identity tensor must be square"); //TODO extend
+						tens->zero();
+						for (uint64_t i = 0; i < shape.dims[0]; ++i)
+							buf[i * shape.dims[0] + i] = 1.f;
+						break;
+				}
 				return unique_ptr<cpu_tensor>(tens);
 			}
 

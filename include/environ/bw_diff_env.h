@@ -34,7 +34,7 @@ namespace plearn::env {
 					) {
 				diff_backend_->reset(inputs, output);
 				for (unsigned in_idx = 0; in_idx < in_grad_maps_.size(); ++in_idx) {
-					auto& in_grad_map = in_grad_maps_[in_idx];
+					auto in_grad_map = in_grad_maps_[in_idx];
 					for (auto& [outn_id, in_outn_grad] : *in_grad_map) {
 						if (!out_grad_map_->contains(outn_id)) continue;
 						auto& out_outn_grad = out_grad_map_->at(outn_id);
@@ -77,6 +77,17 @@ namespace plearn::env {
 				op_diff_envs_[opn.id_]->execute(inputs, output);
 			}
 
+			void calc_diffs(section_exec_tensors& tensors) override {
+				call_graph_backward_runner runner{cg_};
+				runner.run([this, &tensors] (auto& opn) {
+					vector<tensor_p> inputs(opn.inputs_.size());
+					std::transform(opn.inputs_.begin(), opn.inputs_.end(), inputs.begin(),
+							[this, &tensors](auto in_id) { return tensors[in_id]; });
+					auto& output = tensors[opn.out_];
+					calc_diff(opn, inputs, output);
+				});
+			}
+
 			borrowed_ptr<grad_system> get_grad_system() override { return &grad_system_; }
 
 		private:
@@ -104,14 +115,14 @@ namespace plearn::env {
 				for (auto& outn_id: cg_.out_nodes_) {
 					auto& outn = cg_.flow_nodes_.at(outn_id);
 					auto grad_tens_shape = outn.shape_ * outn.shape_;
-					auto back_tens = backend_->create_tensor(grad_tens_shape).release();
+					auto back_tens = backend_->create_tensor(grad_tens_shape, back_tensor_init_mode::identity).release();
 					grad_system_[outn_id][outn_id] = {outn_id, outn_id, 
 						{outn.shape_, outn.shape_, shared_ptr<tensor_back_t>(back_tens)}, true};
-					//TODO set to identity
 				}
 				//insert flow and data nodes
 				//flow nodes
 				for (auto& [flown_id, flown]: cg_.flow_nodes_) {
+					if (std::ranges::count(cg_.out_nodes_, flown_id)) continue;
 					auto& deps = diff_info_->dependencies().at(flown_id);
 					//if flown doesnt depend on any variable, skip
 					if (!deps.depends_on_any()) continue;
@@ -143,7 +154,7 @@ namespace plearn::env {
 				//populate op_diff_envs_
 				for (auto& [opn_id, opn]: cg_.op_nodes_) {
 					auto& op = opn.op_;
-					auto& out_grad_map = grad_system_.at(opn_id);
+					auto& out_grad_map = grad_system_.at(opn.out_);
 					vector<borrowed_ptr<grad_map>> in_grad_maps(opn.inputs_.size());
 					std::transform(opn.inputs_.begin(), opn.inputs_.end(), in_grad_maps.begin(),
 							[this](auto in_id) { return &grad_system_[in_id]; });

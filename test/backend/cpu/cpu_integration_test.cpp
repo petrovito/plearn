@@ -357,7 +357,6 @@ TEST(CpuBackendIntegration, DiffBw) {
 	EXPECT_FLOAT_EQ(data2_grad_buf[0], 9);
 	EXPECT_FLOAT_EQ(data2_grad_buf[1], 12);
 	EXPECT_FLOAT_EQ(data2_grad_buf[2], 15);
-
 	}
 	
 	//run again

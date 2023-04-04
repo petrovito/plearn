@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rep/call_graph_runner.h"
 #include <algorithm>
 #include <bits/ranges_algo.h>
 #include <cassert>
@@ -119,6 +120,17 @@ namespace plearn::env {
 							node_grad.grad_.back_->zero();
 					}
 				}
+			}
+
+			void calc_diffs(section_exec_tensors& tensors) override {
+				call_graph_forward_runner runner{cg_};
+				runner.run([this, &tensors] (auto& opn) {
+					vector<tensor_p> inputs(opn.inputs_.size());
+					std::transform(opn.inputs_.begin(), opn.inputs_.end(), inputs.begin(),
+							[this, &tensors](auto in_id) { return tensors[in_id]; });
+					auto& output = tensors[opn.out_];
+					calc_diff(opn, inputs, output);
+				});
 			}
 
 			void calc_diff(const op_node& opn,

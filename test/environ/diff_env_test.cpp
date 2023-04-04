@@ -58,8 +58,10 @@ TEST(BwDiffEnv, Builder) {
 	ASSERT_EQ(MOCK_TENSOR_BACK(data2n_id)->shape_, shape_t(3,1,1));
 #undef MOCK_TENSOR_BACK
 
-	//TODO test identity of outn grad
-	//TODO test op diff envs?
+	//test outnode is identity
+	ASSERT_TRUE((*grad_sys)[outn_id][outn_id].identity_);
+	ASSERT_EQ(((MockTensorBack*)(*grad_sys)[outn_id][outn_id].grad_.back_.get())->init_mode_, 
+			back_tensor_init_mode::identity);
 }
 
 TEST(BwDiffEnv, OpDiffEnvExecute) {
