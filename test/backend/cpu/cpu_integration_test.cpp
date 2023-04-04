@@ -332,6 +332,7 @@ TEST(CpuBackendIntegration, DiffBw) {
 		.create_bw_diff()
 		.build();
 
+	for (int i = 0; i < 2; ++i)
 	{
 	exec_params params{.calc_diffs = true};
 	params.inputs_[inn_id] = input_ten;

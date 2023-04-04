@@ -10,6 +10,7 @@
 namespace plearn::backend::cpu {
 
 	class cpu_bw_vecmatmul : public bw_op_diff_backend_t {
+		public: 
 		void update_grad(unsigned in_idx,
 				const gradient& out_outn_grad, gradient& in_outn_grad) override {
 			auto out_outn_grad_buf = ((cpu_tensor*)out_outn_grad.back_.get())->get_content()->buf;
@@ -57,7 +58,90 @@ namespace plearn::backend::cpu {
 #undef OTHER_INPUT_BUF
 			}
 		}
-
 	};
+
+	class cpu_bw_square : public bw_op_diff_backend_t {
+		public:
+		void update_grad(unsigned, 
+				const gradient& out_outn_grad, gradient& in_outn_grad) override {
+			auto out_outn_grad_buf = ((cpu_tensor*)out_outn_grad.back_.get())->get_content()->buf;
+			auto in_outn_grad_buf = ((cpu_tensor*)in_outn_grad.back_.get())->get_content()->buf;
+			auto in_buf = ((cpu_tensor*)inputs_->at(0)->back())->get_content()->buf;
+			auto& shape = in_outn_grad.in_shape;
+			auto size = shape.size();
+			auto& outn_shape = out_outn_grad.out_shape;
+			auto outn_size = outn_shape.size();
+			for (uint64_t i = 0; i < size; ++i) {
+				for (uint64_t j = 0; j < outn_size; ++j) {
+					in_outn_grad_buf[i *outn_size +j] += 2 * in_buf[i] * out_outn_grad_buf[i *outn_size + j];
+				}
+			}
+		}
+	};
+
+	class cpu_bw_add : public bw_op_diff_backend_t {
+		public:
+		void update_grad(unsigned,
+				const gradient& out_outn_grad, gradient& in_outn_grad) override {
+			auto out_outn_grad_buf = ((cpu_tensor*)out_outn_grad.back_.get())->get_content()->buf;
+			auto in_outn_grad_buf = ((cpu_tensor*)in_outn_grad.back_.get())->get_content()->buf;
+			auto& shape = in_outn_grad.in_shape;
+			auto size = shape.size();
+			auto& outn_shape = out_outn_grad.out_shape;
+			auto outn_size = outn_shape.size();
+			for (uint64_t i = 0; i < size; ++i) {
+				for (uint64_t j = 0; j < outn_size; ++j) {
+					in_outn_grad_buf[i *outn_size +j] += out_outn_grad_buf[i *outn_size + j];
+				}
+			}
+		}
+	};
+
+
+	class cpu_bw_sub : public bw_op_diff_backend_t {
+		public:
+		void update_grad(unsigned in_idx,
+				const gradient& out_outn_grad, gradient& in_outn_grad) override {
+			auto out_outn_grad_buf = ((cpu_tensor*)out_outn_grad.back_.get())->get_content()->buf;
+			auto in_outn_grad_buf = ((cpu_tensor*)in_outn_grad.back_.get())->get_content()->buf;
+			auto& shape = in_outn_grad.in_shape;
+			auto size = shape.size();
+			auto& outn_shape = out_outn_grad.out_shape;
+			auto outn_size = outn_shape.size();
+			if (in_idx == 0) {
+				for (uint64_t i = 0; i < size; ++i) {
+					for (uint64_t j = 0; j < outn_size; ++j) {
+						in_outn_grad_buf[i *outn_size +j] += out_outn_grad_buf[i *outn_size + j];
+					}
+				}
+			} else {
+				for (uint64_t i = 0; i < size; ++i) {
+					for (uint64_t j = 0; j < outn_size; ++j) {
+						in_outn_grad_buf[i *outn_size +j] -= out_outn_grad_buf[i *outn_size + j];
+					}
+				}
+			}
+		}
+	};
+
+	class cpu_bw_mult : public bw_op_diff_backend_t {
+		public:
+		void update_grad(unsigned in_idx,
+				const gradient& out_outn_grad, gradient& in_outn_grad) override {
+			auto out_outn_grad_buf = ((cpu_tensor*)out_outn_grad.back_.get())->get_content()->buf;
+			auto in_outn_grad_buf = ((cpu_tensor*)in_outn_grad.back_.get())->get_content()->buf;
+			auto& shape = in_outn_grad.in_shape;
+			auto size = shape.size();
+			auto& outn_shape = out_outn_grad.out_shape;
+			auto outn_size = outn_shape.size();
+			auto other_input_buf = ((cpu_tensor*)inputs_->at(1 - in_idx)->back())->get_content()->buf;
+			for (uint64_t i = 0; i < size; ++i) {
+				for (uint64_t j = 0; j < outn_size; ++j) {
+					in_outn_grad_buf[i *outn_size +j] += other_input_buf[i] * out_outn_grad_buf[i *outn_size + j];
+				}
+			}
+		}
+	};
+
 }
 

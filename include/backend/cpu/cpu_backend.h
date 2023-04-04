@@ -37,10 +37,20 @@ namespace plearn::backend::cpu {
 					case op_type::add:
 						cpu_add(op, in, out);
 						break;
+					case op_type::sub:
+						cpu_sub(op, in, out);
+						break;
+					case op_type::mult:
+						cpu_mult(op, in, out);
+						break;
+					case op_type::square:
+						cpu_square(op, in, out);
+						break;
 				}
 			}
 
-			unique_ptr<tensor_back_t> create_tensor(const shape_t& shape, back_tensor_init_mode init) override {
+			unique_ptr<tensor_back_t> create_tensor(const shape_t& shape, 
+					back_tensor_init_mode init=back_tensor_init_mode::no_init) override {
 				auto tens = tens_fac_.allocate(shape);
 				switch (init) {
 					case back_tensor_init_mode::no_init:
@@ -73,6 +83,8 @@ namespace plearn::backend::cpu {
 						return std::make_unique<cpu_fp_vecmatmul>();
 					case op_type::add:
 						break;
+					default:
+						break;
 				}
 				throw std::runtime_error("Not implemented");
 			}
@@ -84,10 +96,18 @@ namespace plearn::backend::cpu {
 					case op_type::noop:
 					case op_type::identity: //TODO
 					case op_type::matmul:
-					case op_type::add:
 						break;
 					case op_type::vecmatmul:
 						return std::make_unique<cpu_bw_vecmatmul>();
+					case op_type::square:
+						return std::make_unique<cpu_bw_square>();
+					case op_type::add:
+						return std::make_unique<cpu_bw_add>();
+					case op_type::sub:
+						return std::make_unique<cpu_bw_sub>();
+					case op_type::mult:
+						return std::make_unique<cpu_bw_mult>();
+
 				}
 				throw std::runtime_error("Not implemented");
 			}
