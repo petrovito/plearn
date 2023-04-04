@@ -36,6 +36,7 @@ namespace plearn::env {
 				for (unsigned in_idx = 0; in_idx < in_grad_maps_.size(); ++in_idx) {
 					auto& in_grad_map = in_grad_maps_[in_idx];
 					for (auto& [outn_id, in_outn_grad] : *in_grad_map) {
+						if (!out_grad_map_->contains(outn_id)) continue;
 						auto& out_outn_grad = out_grad_map_->at(outn_id);
 						diff_backend_->update_grad(in_idx, out_outn_grad.grad_, in_outn_grad.grad_);
 					}

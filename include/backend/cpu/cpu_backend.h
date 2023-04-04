@@ -1,5 +1,6 @@
 #pragma once
 
+#include "backend/cpu/cpu_bw_grad.h"
 #include <memory>
 #include <cstdlib>
 
@@ -64,6 +65,15 @@ namespace plearn::backend::cpu {
 			unique_ptr<bw_op_diff_backend_t> create_op_bw_diff_backend(
 					const operation& op 
 			) override {
+				switch (op.type_) {
+					case op_type::noop:
+					case op_type::identity: //TODO
+					case op_type::matmul:
+					case op_type::add:
+						break;
+					case op_type::vecmatmul:
+						return std::make_unique<cpu_bw_vecmatmul>();
+				}
 				throw std::runtime_error("Not implemented");
 			}
 
