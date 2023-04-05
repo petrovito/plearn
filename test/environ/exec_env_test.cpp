@@ -53,7 +53,7 @@ TEST(EnvSection, Execute) {
 	params.outputs_[outn_id] = mock_env->create_tensor(shape_t{10});
 
 	EXPECT_CALL(*mock_backend, exec_op(_, _, _)).Times(2);
-	auto result = section.execute(params);
+	auto result = section->execute(params);
 	ASSERT_TRUE(result.success_);
 
 	ASSERT_EQ(params.outputs_[outn_id]->shape(), shape_t{10});

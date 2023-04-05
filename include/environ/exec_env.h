@@ -23,8 +23,10 @@ namespace plearn::env {
 		public:
 			exec_env(backend_t* backend) : backend_{backend} {}
 
-			const backend_t& backend() const { return *backend_; }
+			[[nodiscard]]
+			borrowed_ptr<backend_t> backend() const { return backend_; }
 
+			[[nodiscard]]
 			virtual tensor_p create_tensor(const shape_t& s) {
 				auto ten_b = backend_->create_tensor(s);
 				return tens_fac_.create(s, std::move(ten_b));

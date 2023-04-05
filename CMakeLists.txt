@@ -43,9 +43,6 @@ if (PLEARN_TEST)
 	enable_testing()
 	include(GoogleTest)
 	add_executable(unit_test 
-		test/cmpl/basic_test.cpp
-		test/cmpl/layer_test.cpp
-
 		test/rep/call_graph_test.cpp
 		test/rep/diff_info_test.cpp
 
@@ -58,6 +55,11 @@ if (PLEARN_TEST)
 		test/backend/cpu/cpu_integration_test.cpp
 
 		test/data/persistence_test.cpp
+
+		test/model/model_test.cpp
+
+		test/cmpl/basic_test.cpp
+		test/cmpl/layer_test.cpp
 		)
 	target_link_libraries(unit_test PRIVATE CONAN_PKG::gtest plearn_core)
 	gtest_discover_tests(unit_test)

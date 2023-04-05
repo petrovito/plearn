@@ -1,4 +1,5 @@
 #include "backend/cpu/cpu_backend.h"
+#include "backend/cpu/cpu_op_impl.h"
 #include "backend/cpu/cpu_types.h"
 #include "environ/env_types.h"
 #include "environ/exec_env.h"
@@ -29,7 +30,7 @@ TEST(CpuBwGrad, VecMatmul) {
 	std::fill_n(b, SIZE, 2.f);
 	std::fill_n(c, dim2, 0.f);
 
-	_cpu_matvecmul(a, b, c, dim1, dim2);
+	_cpu_vecmatmul(a, b, c, dim1, dim2);
 
 	gradient in1_grad = gradient{shape_t{dim1}, shape_t{1}, backend.create_tensor(shape_t{dim1, 1})};
 	gradient in2_grad = gradient{shape_t{dim1, dim2}, shape_t{1}, backend.create_tensor(shape_t{dim1, dim2, 1})};

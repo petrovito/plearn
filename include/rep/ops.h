@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rep/rep_types.h"
 #include <compare>
 
 namespace plearn::rep {
@@ -27,8 +28,6 @@ namespace plearn::rep {
 
 	struct operation {
 		op_type type_;
-		output_modify_t modify_ = output_modify_t::set;
-		
 		friend auto operator<=>(const operation&, const operation&) = default;
 	};
 
@@ -46,6 +45,18 @@ namespace plearn::rep {
 
 	struct add : public operation {
 		add() : operation{op_type::add} {}
+	};
+	
+	struct sub : public operation {
+		sub() : operation{op_type::sub} {}
+	};
+
+	struct mult : public operation {
+		mult() : operation{op_type::mult} {}
+	};
+
+	struct square : public operation {
+		square() : operation{op_type::square} {}
 	};
 
 

@@ -66,7 +66,7 @@ TEST(CpuBackendIntegration, Execute) {
 	params.inputs_[inn_id] = input_ten;
 	params.outputs_[outn_id] = env->create_tensor(cg.flow_nodes_.at(outn_id).shape_);
 
-	auto result = section.execute(params);
+	auto result = section->execute(params);
 
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;
 	//internal node = [9,12,15]
@@ -80,7 +80,7 @@ TEST(CpuBackendIntegration, Execute) {
 	params.inputs_[inn_id] = input_ten;
 	params.outputs_[outn_id] = env->create_tensor(cg.flow_nodes_.at(outn_id).shape_);
 
-	auto result = section.execute(params);
+	auto result = section->execute(params);
 
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;
 	//internal node = [9,12,15]
@@ -146,7 +146,7 @@ TEST(CpuBackendIntegration, DiffFw) {
 	params.inputs_[inn_id] = input_ten;
 	params.outputs_[outn_id] = env->create_tensor(cg.flow_nodes_.at(outn_id).shape_);
 
-	auto result = section.execute(params);
+	auto result = section->execute(params);
 
 	//internal node = [9,12,15]
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;
@@ -175,7 +175,7 @@ TEST(CpuBackendIntegration, DiffFw) {
 	params.inputs_[inn_id] = input_ten;
 	params.outputs_[outn_id] = env->create_tensor(cg.flow_nodes_.at(outn_id).shape_);
 
-	auto result = section.execute(params);
+	auto result = section->execute(params);
 
 	//internal node = [9,12,15]
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;
@@ -256,7 +256,7 @@ TEST(CpuBackendIntegration, DiffFw2) {
 	params.inputs_[inn_id] = input_ten;
 	params.outputs_[outn_id] = env->create_tensor(cg.flow_nodes_.at(outn_id).shape_);
 
-	auto result = section.execute(params);
+	auto result = section->execute(params);
 
 	//internal node = [9,12,15]
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;
@@ -338,7 +338,7 @@ TEST(CpuBackendIntegration, DiffBw) {
 	params.inputs_[inn_id] = input_ten;
 	params.outputs_[outn_id] = env->create_tensor(cg.flow_nodes_.at(outn_id).shape_);
 
-	auto result = section.execute(params);
+	auto result = section->execute(params);
 
 	//internal node = [9,12,15]
 	auto buf = ((cpu_tensor*) params.outputs_.at(outn_id)->back())->get_content()->buf;

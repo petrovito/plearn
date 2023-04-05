@@ -109,6 +109,14 @@ namespace plearn::env {
 
 				return result;
 			}
+
+			tensor_p& get_tensor(node_id id) {
+				if (data_tensors_.contains(id)) {
+					return data_tensors_.at(id);
+				} else {
+					return resources_.internal_tensors_.at(id);
+				}
+			}
 			
 
 		private:
@@ -171,9 +179,10 @@ namespace plearn::env {
 			}
 
 
-			env_section build() {
-				return env_section{env_, backend_, cg_, data_tensors_, 
-					std::move(resources_), std::move(diff_env_), std::move(diff_info_)};
+			[[nodiscard]]
+			unique_ptr<env_section> build() {
+				return std::make_unique<env_section>(env_, backend_, cg_, data_tensors_, 
+					std::move(resources_), std::move(diff_env_), std::move(diff_info_));
 			}
 		private:
 			const call_graph& cg_;
