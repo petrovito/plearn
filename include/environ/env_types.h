@@ -90,6 +90,8 @@ namespace plearn::env {
 			/* bool identity{false}; */
 
 			shared_ptr<tensor_back_t> back_{};
+
+			borrowed_ptr<float> data() {return back_->data();}
 	};
 
 	struct node_grad {

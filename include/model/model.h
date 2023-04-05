@@ -8,6 +8,7 @@
 #include <environ/env_section.h>
 #include <memory>
 #include <model/exec_env_provider.h>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
@@ -152,7 +153,11 @@ namespace plearn::model {
 			void compile() {
 				cg_ = cg_builder_.build();
 				env_section_builder section_builder(exec_env_, exec_env_->backend(), cg_);
-				env_section_ = section_builder.allocate_internal_tensors().build();
+				env_section_ = section_builder
+					.create_diff_info()
+					.create_bw_diff()
+					.allocate_internal_tensors()
+					.build();
 			}
 
 
@@ -161,8 +166,20 @@ namespace plearn::model {
 			}
 
 
+			struct ExecResult {
+				vector<tensor_p> tensors;
+				borrowed_ptr<grad_system> grads{};
+				
+				gradient& grad_of(ModelTensor m_tensor, ModelTensor output) {
+					if (!grads) throw std::runtime_error("Gradients not set.");
+					auto& grad_map = (*grads)[m_tensor->id_];
+					return grad_map[output->id_].grad_;
+				}
+				
+			};
 
-			vector<tensor_p> execute(const vector<tensor_p>& inputs) {
+
+			ExecResult execute(const vector<tensor_p>& inputs, bool calc_diffs=false) {
 				unordered_map<node_id, tensor_p> input_tensors;
 				for (unsigned idx = 0; idx < inputs_.size(); idx++) {
 					auto& t = inputs_[idx];
@@ -171,14 +188,19 @@ namespace plearn::model {
 				unordered_map<node_id, tensor_p> output_tensors;
 				for (auto& t : outputs_)
 					output_tensors[t->id_] = exec_env_->create_tensor(t->shape_, tensor_init::zero);
-				exec_params params{.inputs_=input_tensors, .outputs_=output_tensors};
-				env_section_->execute(params);
-				vector<tensor_p> outputs;
+
+				exec_params params{.calc_diffs=calc_diffs,
+					.inputs_=input_tensors, .outputs_=output_tensors};
+				auto exec_result = env_section_->execute(params);
+
+				ExecResult result;
 				for (unsigned idx = 0; idx < outputs_.size(); idx++) {
 					auto& t = outputs_[idx];
-					outputs.push_back(params.outputs_[t->id_]);
+					result.tensors.push_back(params.outputs_[t->id_]);
 				}
-				return outputs;
+				if (calc_diffs)
+					result.grads = exec_result.grad_system_;
+				return result;
 			}
 
 		private:
