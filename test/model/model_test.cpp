@@ -11,12 +11,11 @@ TEST(Model, Execute) {
 	auto input = m.add_input({3});
 	auto variable = m.add_variable({3});
 
-	auto difference = m.add_operation(operation{}, {3}, input, variable);
-	auto output = m.add_operation(operation{}, {3}, difference);
-	m.set_output(output);
+	auto difference = input - variable;
+	auto sq = difference.square();
 
+	m.set_output(sq);
 	m.compile();
-
 }
 
 }

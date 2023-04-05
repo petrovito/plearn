@@ -15,30 +15,98 @@ namespace plearn::model {
 	using namespace ::plearn::env;
 
 
-	class Model;
-	
-	class ModelTensorT {
-		public:
-			ModelTensorT(const shape_t& shape, Model& model, node_id id) 
-				: shape_(shape), model_(model), id_(id) {}
-
-			node_id id() const { return id_; }
-
-		private:
-			const shape_t shape_;
-			const Model& model_;
-			const node_id id_;
-
-			//is data node or flow node
-			bool internal_ = false;
-
-			friend class Model;
-	};
-
-	using ModelTensor = shared_ptr<ModelTensorT>;
-
 
 	class Model {
+
+		class ModelTensorT {
+			public:
+				node_id id() const { return id_; }
+
+			private:
+				ModelTensorT(const shape_t& shape, Model& model, node_id id) 
+					: shape_(shape), model_(model), id_(id) {}
+
+				const shape_t shape_;
+				Model& model_;
+				const node_id id_;
+
+				//is data node or flow node
+				bool internal_ = false;
+
+				friend class Model;
+				friend class ModelTensor;
+		};
+
+
+		class ModelTensor : private shared_ptr<ModelTensorT> {
+			public:
+				ModelTensorT* get() const { return shared_ptr<ModelTensorT>::get(); }
+				ModelTensorT* operator->() const { return shared_ptr<ModelTensorT>::operator->(); }
+
+				[[nodiscard]]
+				static ModelTensor create(const shape_t& shape, Model& model, node_id id) {
+					return {new ModelTensorT(shape, model, id)};
+				}
+
+				[[nodiscard]]
+					ModelTensor operator+(const ModelTensor& other) const {
+						if (get()->shape_ != other.get()->shape_) 
+							throw std::runtime_error("Shape mismatch");
+						return get()->model_.add_operation(add{}, get()->shape_, *this, other);
+					}
+				[[nodiscard]]
+					ModelTensor operator-(const ModelTensor& other) const {
+						if (get()->shape_ != other.get()->shape_) 
+							throw std::runtime_error("Shape mismatch");
+						return get()->model_.add_operation(sub{}, get()->shape_, *this, other);
+					}
+
+				[[nodiscard]]
+					ModelTensor operator*(const ModelTensor& other) const {
+						if (get()->shape_ != other.get()->shape_) 
+							throw std::runtime_error("Shape mismatch");
+						return get()->model_.add_operation(mult{}, get()->shape_, *this, other);
+					}
+
+				[[nodiscard]]
+					ModelTensor matmul(const ModelTensor& other) const {
+						const shape_t& shape = get()->shape_;
+						if (shape.rank != 2 && other->shape_.rank != 2 &&
+								shape.dims[1] != other->shape_.dims[0])
+							throw std::runtime_error("Shape mismatch");
+						shape_t out_shape{shape.dims[0], other->shape_.dims[1]};
+						return get()->model_.add_operation(rep::matmul{}, out_shape, *this, other);
+					}
+
+				[[nodiscard]]
+					ModelTensor dot_product(const ModelTensor& other) const {
+						const shape_t& shape = get()->shape_;
+						if (shape.rank != 1 && other->shape_.rank != 1 &&
+								shape.dims[0] != other->shape_.dims[0])
+							throw std::runtime_error("Shape mismatch");
+						shape_t out_shape{1};
+						return get()->model_.add_operation(rep::dot_product{}, out_shape, *this, other);
+					}
+
+				[[nodiscard]]
+					ModelTensor vecmatmul(const ModelTensor& other) const {
+						const shape_t& shape = get()->shape_;
+						if (shape.rank != 1 && other->shape_.rank != 2 &&
+								shape.dims[0] != other->shape_.dims[0])
+							throw std::runtime_error("Shape mismatch");
+						shape_t out_shape{other->shape_.dims[1]};
+						return get()->model_.add_operation(rep::vecmatmul{}, out_shape, *this, other);
+					}
+
+				[[nodiscard]]
+					ModelTensor square() const {
+						return get()->model_.add_operation(rep::square{}, get()->shape_, *this);
+					}
+
+			private:
+				ModelTensor(ModelTensorT* t) : shared_ptr<ModelTensorT>(t) {}
+		};
+
 		public:
 			Model() :
 				exec_env_(ExecEnvProvider::get_exec_env()) { }
@@ -46,7 +114,7 @@ namespace plearn::model {
 			[[nodiscard]]
 			ModelTensor add_variable(shape_t shape) {
 				auto nid = cg_builder_.add_data_node(shape);
-				auto& tensor = tensors_.emplace_back(std::make_shared<ModelTensorT>(shape, *this, nid));
+				auto& tensor = tensors_.emplace_back(ModelTensor::create(shape, *this, nid));
 				variables_.push_back(tensor);
 				tensors_map_[nid] = &tensor;
 				return tensor;
@@ -55,7 +123,7 @@ namespace plearn::model {
 			[[nodiscard]]
 			ModelTensor add_input(shape_t shape) {
 				auto nid = cg_builder_.add_input_node(shape);
-				auto& tensor = tensors_.emplace_back(std::make_shared<ModelTensorT>(shape, *this, nid));
+				auto& tensor = tensors_.emplace_back(ModelTensor::create(shape, *this, nid));
 				inputs_.push_back(tensor);
 				tensors_map_[nid] = &tensor;
 				return tensor;
@@ -65,10 +133,10 @@ namespace plearn::model {
 			[[nodiscard]]
 			ModelTensor add_operation(const operation& op, const shape_t& output_shape,
 					Input&&... inputs) {
-				vector<node_id> input_ids(sizeof...(inputs));
+				vector<node_id> input_ids;
 				((input_ids.push_back(inputs->id_), ...));
 				auto [_, nid] = cg_builder_.add_op_node(op, input_ids, output_shape);
-				auto& tensor = tensors_.emplace_back(std::make_shared<ModelTensorT>(output_shape, *this, nid));
+				auto& tensor = tensors_.emplace_back(ModelTensor::create(output_shape, *this, nid));
 				flow_tensors_.push_back(tensor);
 				tensors_map_[nid] = &tensor;
 				return tensor;

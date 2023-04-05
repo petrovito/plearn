@@ -11,6 +11,8 @@ namespace plearn::rep {
 		identity,
 		matmul,
 		vecmatmul,
+		matvecmul,
+		dot_product,
 		sub,
 		add,
 		mult,
@@ -41,6 +43,14 @@ namespace plearn::rep {
 
 	struct vecmatmul : public operation {
 		vecmatmul() : operation{op_type::vecmatmul} {}
+	};
+
+	struct matvecmul : public operation {
+		matvecmul() : operation{op_type::matvecmul} {}
+	};
+
+	struct dot_product : public operation {
+		dot_product() : operation{op_type::dot_product} {}
 	};
 
 	struct add : public operation {
