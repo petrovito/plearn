@@ -25,7 +25,13 @@ namespace plearn::env {
 	class exec_env;
 	class env_section;
 	class backend_t;
-	class tensor_back_t;
+
+	class tensor_back_t {
+		public:
+			virtual float* data() = 0;
+			virtual void zero() = 0; //anull tensor
+			virtual ~tensor_back_t() = default;
+	};
 
 
 	class tensor_t {
@@ -33,6 +39,7 @@ namespace plearn::env {
 			const shape_t& shape() const { return shape_; }
 			tensor_id id() const { return id_; }
 			borrowed_ptr<tensor_back_t> back() { return back_.get(); }
+			borrowed_ptr<float> data() { return back_->data(); }
 		private:
 			tensor_t(const shape_t& s, tensor_id id, 
 					unique_ptr<tensor_back_t>&& ten_b) : 
@@ -186,7 +193,7 @@ namespace plearn::env {
 			virtual ~fp_diff_backend_t() = default;
 	};
 
-	enum class back_tensor_init_mode {
+	enum class tensor_init {
 		no_init,
 		zero,
 		identity
@@ -196,15 +203,12 @@ namespace plearn::env {
 		public:
 			[[nodiscard]]
 			virtual unique_ptr<tensor_back_t> create_tensor(const shape_t& s,
-					back_tensor_init_mode init=back_tensor_init_mode::no_init) = 0;
+					tensor_init init=tensor_init::no_init) = 0;
+
+			[[nodiscard]]
+			virtual unique_ptr<tensor_back_t> create_tensor(const shape_t& s, float* data) = 0;
 
 			virtual ~backend_t() = default;
-	};
-
-	class tensor_back_t {
-		public:
-			virtual void zero() = 0; //anull tensor
-			virtual ~tensor_back_t() = default;
 	};
 
 

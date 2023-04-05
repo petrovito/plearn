@@ -115,7 +115,7 @@ namespace plearn::env {
 				for (auto& outn_id: cg_.out_nodes_) {
 					auto& outn = cg_.flow_nodes_.at(outn_id);
 					auto grad_tens_shape = outn.shape_ * outn.shape_;
-					auto back_tens = backend_->create_tensor(grad_tens_shape, back_tensor_init_mode::identity).release();
+					auto back_tens = backend_->create_tensor(grad_tens_shape, tensor_init::identity).release();
 					grad_system_[outn_id][outn_id] = {outn_id, outn_id, 
 						{outn.shape_, outn.shape_, shared_ptr<tensor_back_t>(back_tens)}, true};
 				}

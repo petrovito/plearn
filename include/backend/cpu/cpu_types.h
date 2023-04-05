@@ -32,6 +32,8 @@ namespace plearn::backend::cpu {
 
 		tensor_buf(uint64_t size) : size(size),
 			buf{new (std::align_val_t(32)) float[size]{}} { }
+		tensor_buf(uint64_t size, float* data) : size(size), buf{data} {}
+
 		~tensor_buf() { delete [] buf; }
 	};
 
@@ -45,6 +47,7 @@ namespace plearn::backend::cpu {
 			 *  Zero out tensor content.
 			 */
 			void zero() override { std::fill_n(content_->buf, shape_.size(), 0.f); }
+			float* data() override { return content_->buf; }
 
 		private:
 			cpu_tensor(const shape_t& shape, const shared_ptr<tensor_buf>& buf) :
@@ -61,6 +64,10 @@ namespace plearn::backend::cpu {
 		public:
 			cpu_tensor* allocate(const shape_t& shape) {
 				auto buf = std::make_shared<tensor_buf>(shape.size());
+				return new cpu_tensor(shape, buf);
+			}
+			cpu_tensor* create(const shape_t& shape, float* data) {
+				auto buf = std::make_shared<tensor_buf>(shape.size(), data);
 				return new cpu_tensor(shape, buf);
 			}
 	};

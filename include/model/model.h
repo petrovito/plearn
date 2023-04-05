@@ -103,6 +103,8 @@ namespace plearn::model {
 						return get()->model_.add_operation(rep::square{}, get()->shape_, *this);
 					}
 
+				void set_tensor(tensor_p t) { get()->model_.set_variable_tensor(*this, t); }
+
 			private:
 				ModelTensor(ModelTensorT* t) : shared_ptr<ModelTensorT>(t) {}
 		};
@@ -153,22 +155,31 @@ namespace plearn::model {
 				env_section_ = section_builder.allocate_internal_tensors().build();
 			}
 
-/* 			vector<ModelTensor> execute(const vector<ModelTensor> inputs) { */
-/* 				unordered_map<node_id, tensor_p> input_tensors; */
-/* 				for (auto& t : inputs) */
-/* 					input_tensors[t->id_] = t->tensor_; */
-/* 				unordered_map<node_id, tensor_p> output_tensors; */
-/* 				for (auto& t : outputs_) */
-/* 					output_tensors[t->id_] = exec_env_->create_tensor(t->shape_); */
-/* 				exec_params params{.inputs_ = input_tensors, .outputs_ = output_tensors}; */
-/* 				env_section_->execute(params); */
-/* 				vector<ModelTensor> outputs; */
-/* 				for (auto& t : outputs_) { */
-/* 					auto& tensor = outputs.emplace_back(std::make_shared<ModelTensorT>(t->shape_, *this, t->id_)); */
-/* 					tensor->tensor_ = output_tensors[t->id_]; */
-/* 				} */
-/* 				return outputs; */
-/* 			} */
+
+			void set_variable_tensor(ModelTensor& m_tensor, tensor_p t) {
+				env_section_->set_data_tensor(m_tensor->id_, t);
+			}
+
+
+
+			vector<tensor_p> execute(const vector<tensor_p>& inputs) {
+				unordered_map<node_id, tensor_p> input_tensors;
+				for (unsigned idx = 0; idx < inputs_.size(); idx++) {
+					auto& t = inputs_[idx];
+					input_tensors[t->id_] = inputs[idx]; 
+				}
+				unordered_map<node_id, tensor_p> output_tensors;
+				for (auto& t : outputs_)
+					output_tensors[t->id_] = exec_env_->create_tensor(t->shape_, tensor_init::zero);
+				exec_params params{.inputs_=input_tensors, .outputs_=output_tensors};
+				env_section_->execute(params);
+				vector<tensor_p> outputs;
+				for (unsigned idx = 0; idx < outputs_.size(); idx++) {
+					auto& t = outputs_[idx];
+					outputs.push_back(params.outputs_[t->id_]);
+				}
+				return outputs;
+			}
 
 		private:
 			vector<ModelTensor> tensors_;

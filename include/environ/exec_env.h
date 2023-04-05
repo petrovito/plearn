@@ -27,8 +27,15 @@ namespace plearn::env {
 			borrowed_ptr<backend_t> backend() const { return backend_; }
 
 			[[nodiscard]]
-			virtual tensor_p create_tensor(const shape_t& s) {
-				auto ten_b = backend_->create_tensor(s);
+			virtual tensor_p create_tensor(const shape_t& s, 
+					tensor_init init=tensor_init::no_init) {
+				auto ten_b = backend_->create_tensor(s, init);
+				return tens_fac_.create(s, std::move(ten_b));
+			}
+
+			[[nodiscard]]
+			virtual tensor_p create_tensor(const shape_t& s, float* data) {
+				auto ten_b = backend_->create_tensor(s, data);
 				return tens_fac_.create(s, std::move(ten_b));
 			}
 		protected:

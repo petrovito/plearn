@@ -61,7 +61,7 @@ TEST(BwDiffEnv, Builder) {
 	//test outnode is identity
 	ASSERT_TRUE((*grad_sys)[outn_id][outn_id].identity_);
 	ASSERT_EQ(((MockTensorBack*)(*grad_sys)[outn_id][outn_id].grad_.back_.get())->init_mode_, 
-			back_tensor_init_mode::identity);
+			tensor_init::identity);
 }
 
 TEST(BwDiffEnv, OpDiffEnvExecute) {

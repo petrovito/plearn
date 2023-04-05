@@ -117,6 +117,10 @@ namespace plearn::env {
 					return resources_.internal_tensors_.at(id);
 				}
 			}
+
+			void set_data_tensor(node_id id, tensor_p tens) {
+				data_tensors_[id] = tens;
+			}
 			
 
 		private:

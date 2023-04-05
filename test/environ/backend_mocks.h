@@ -10,11 +10,12 @@ namespace plearn::env {
 
 class MockTensorBack : public tensor_back_t {
 	public:
-		MockTensorBack(const shape_t& s, back_tensor_init_mode init
+		MockTensorBack(const shape_t& s, tensor_init init
 				) : shape_(s), init_mode_(init) {};
 		void zero() override {};
+		float* data() override {return nullptr;}
 		shape_t shape_;
-		back_tensor_init_mode init_mode_;
+		tensor_init init_mode_;
 };
 
 class MockBackend : public backend_t {
@@ -24,10 +25,13 @@ class MockBackend : public backend_t {
 				, (override));
 
 		unique_ptr<tensor_back_t> create_tensor(const shape_t& s,
-				back_tensor_init_mode init) override {
+				tensor_init init) override {
 			return std::make_unique<MockTensorBack>(s, init);
 		}
 
+		unique_ptr<tensor_back_t> create_tensor(const shape_t& s, float*) override {
+			return std::make_unique<MockTensorBack>(s, tensor_init::no_init);
+		}
 		unique_ptr<fw_op_diff_backend_t> create_op_fw_diff_backend(
 				const operation&  ) override { return nullptr; }
 
@@ -42,8 +46,8 @@ class MockExecEnv : public exec_env {
 	public:
 		MockExecEnv() : exec_env(nullptr) {};
 		MockExecEnv(backend_t* backend) : exec_env(backend) {}
-		tensor_p create_tensor(const shape_t& s) override {
-			auto back_tensor = std::make_unique<MockTensorBack>(s, back_tensor_init_mode::no_init);
+		tensor_p create_tensor(const shape_t& s, tensor_init init=tensor_init::no_init) override {
+			auto back_tensor = std::make_unique<MockTensorBack>(s, init);
 			return tens_fac_.create(s, std::move(back_tensor));
 		}
 
