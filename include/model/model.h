@@ -12,17 +12,20 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
+#include <model/model_types.h>
 
 namespace plearn::model {
-	using namespace ::plearn::env;
 
 
 
 	class Model {
+		public:
 
 		class ModelTensorT {
 			public:
 				node_id id() const { return id_; }
+				Model& model() const { return model_; }
+				const shape_t& shape() const { return shape_; }
 
 			private:
 				ModelTensorT(const shape_t& shape, Model& model, node_id id) 
@@ -42,6 +45,12 @@ namespace plearn::model {
 
 		class ModelTensor : private shared_ptr<ModelTensorT> {
 			public:
+				ModelTensor() = default;
+				ModelTensor(const ModelTensor&) = default;
+				ModelTensor(ModelTensor&&) = default;
+				ModelTensor& operator=(const ModelTensor&) = default;
+				ModelTensor& operator=(ModelTensor&&) = default;
+
 				ModelTensorT* get() const { return shared_ptr<ModelTensorT>::get(); }
 				ModelTensorT* operator->() const { return shared_ptr<ModelTensorT>::operator->(); }
 
@@ -130,10 +139,25 @@ namespace plearn::model {
 					}
 
 
-				void set_tensor(tensor_p t) { get()->model_.set_variable_tensor(*this, t); }
+				void set_tensor(tensor_p t) { 
+					get()->model_.set_variable_tensor(*this, t); }
 
 			private:
 				ModelTensor(ModelTensorT* t) : shared_ptr<ModelTensorT>(t) {}
+		};
+
+		class Layer {
+			public:
+
+			private:
+				vector<ModelTensor> tensors_;
+				vector<ModelTensor> variables_;
+				vector<ModelTensor> flow_tensors_;
+				vector<ModelTensor> inputs_;
+				vector<ModelTensor> outputs_;
+				unordered_map<node_id, ModelTensor> tensors_map_;
+				friend class Model;
+
 		};
 
 		public:
@@ -142,19 +166,27 @@ namespace plearn::model {
 			
 			[[nodiscard]]
 			ModelTensor add_variable(shape_t shape) {
+				auto layer = set_uncommited();
 				auto nid = cg_builder_.add_data_node(shape);
 				auto& tensor = tensors_.emplace_back(ModelTensor::create(shape, *this, nid));
 				variables_.push_back(tensor);
-				tensors_map_[nid] = &tensor;
+				tensors_map_[nid] = tensor;
+				layer.tensors_.push_back(tensor);
+				layer.variables_.push_back(tensor);
+				layer.tensors_map_[nid] = tensor;
 				return tensor;
 			}
 
 			[[nodiscard]]
 			ModelTensor add_input(shape_t shape) {
+				auto& layer = set_uncommited();
 				auto nid = cg_builder_.add_input_node(shape);
 				auto& tensor = tensors_.emplace_back(ModelTensor::create(shape, *this, nid));
 				inputs_.push_back(tensor);
-				tensors_map_[nid] = &tensor;
+				tensors_map_[nid] = tensor;
+				layer.tensors_.push_back(tensor);
+				layer.inputs_.push_back(tensor);
+				layer.tensors_map_[nid] = tensor;
 				return tensor;
 			}
 
@@ -162,12 +194,16 @@ namespace plearn::model {
 			[[nodiscard]]
 			ModelTensor add_operation(const operation& op, const shape_t& output_shape,
 					Input&&... inputs) {
+				auto& layer = set_uncommited();
 				vector<node_id> input_ids;
 				((input_ids.push_back(inputs->id_), ...));
 				auto [_, nid] = cg_builder_.add_op_node(op, input_ids, output_shape);
 				auto& tensor = tensors_.emplace_back(ModelTensor::create(output_shape, *this, nid));
 				flow_tensors_.push_back(tensor);
-				tensors_map_[nid] = &tensor;
+				tensors_map_[nid] = tensor;
+				layer.tensors_.push_back(tensor);
+				layer.flow_tensors_.push_back(tensor);
+				layer.tensors_map_[nid] = tensor;
 				return tensor;
 			}
 
@@ -176,7 +212,24 @@ namespace plearn::model {
 				outputs_.push_back(tensor);
 			}
 
+			void unset_output(ModelTensor& tensor) {
+				auto it = outputs_.begin();
+				for (; it != outputs_.end(); ++it) {
+					if (it->get() == tensor.get()) { //NOTE nasty..
+						outputs_.erase(it);
+						break;
+					}
+				}
+				if (it == outputs_.end()) return; //wasnt output
+				cg_builder_.unset_output(tensor->id_);
+			}
+
+			void commit() {
+				uncommited_ = false;
+			}
+
 			void compile() {
+				if (uncommited_) commit();
 				cg_ = cg_builder_.build();
 				env_section_builder section_builder(exec_env_, exec_env_->backend(), cg_);
 				env_section_ = section_builder
@@ -184,18 +237,29 @@ namespace plearn::model {
 					.create_bw_diff()
 					.allocate_internal_tensors()
 					.build();
+				uncompiled_ = false;
 			}
 
 
 			void set_variable_tensor(ModelTensor& m_tensor, tensor_p t) {
+				if (uncompiled_) throw std::runtime_error("Model not compiled.");
 				env_section_->set_data_tensor(m_tensor->id_, t);
 			}
 
 
 			struct ExecResult {
-				vector<tensor_p> tensors;
+				unordered_map<node_id, tensor_p> tensors{};
 				borrowed_ptr<grad_system> grads{};
-				
+
+				[[nodiscard]]
+				tensor_p tensor_of(ModelTensor m_tensor) {
+					if (!tensors.contains(m_tensor->id_)) {
+						throw std::runtime_error("Tensor not set as output.");
+					}
+					return tensors[m_tensor->id_];
+				}
+
+				[[nodiscard]]
 				gradient& grad_of(ModelTensor m_tensor, ModelTensor output) {
 					if (!grads) throw std::runtime_error("Gradients not set.");
 					auto& grad_map = (*grads)[m_tensor->id_];
@@ -206,6 +270,7 @@ namespace plearn::model {
 
 
 			ExecResult execute(const vector<tensor_p>& inputs, bool calc_diffs=false) {
+				if (uncommited_ || uncompiled_) throw std::runtime_error("Model not compiled.");
 				unordered_map<node_id, tensor_p> input_tensors;
 				for (unsigned idx = 0; idx < inputs_.size(); idx++) {
 					auto& t = inputs_[idx];
@@ -219,29 +284,36 @@ namespace plearn::model {
 					.inputs_=input_tensors, .outputs_=output_tensors};
 				auto exec_result = env_section_->execute(params);
 
-				ExecResult result;
-				for (unsigned idx = 0; idx < outputs_.size(); idx++) {
-					auto& t = outputs_[idx];
-					result.tensors.push_back(params.outputs_[t->id_]);
-				}
+				ExecResult result{params.outputs_};
 				if (calc_diffs)
 					result.grads = exec_result.grad_system_;
 				return result;
 			}
 
 		private:
+			Layer& set_uncommited() {
+				uncompiled_ = true;
+				if (uncommited_) return layers_.back();
+				uncommited_ = true;
+				return layers_.emplace_back();
+			}
+
 			vector<ModelTensor> tensors_;
 			vector<ModelTensor> variables_;
 			vector<ModelTensor> flow_tensors_;
 			vector<ModelTensor> inputs_;
 			vector<ModelTensor> outputs_;
-			unordered_map<node_id, ModelTensor*> tensors_map_;
+			unordered_map<node_id, ModelTensor> tensors_map_;
+
+			vector<Layer> layers_;
 
 			borrowed_ptr<exec_env> exec_env_;
 			unique_ptr<env_section> env_section_;
 
 			call_graph cg_;
 			call_graph_builder cg_builder_;
+			bool uncommited_{false};
+			bool uncompiled_{true};
 
 
 	};

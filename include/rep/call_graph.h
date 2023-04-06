@@ -30,7 +30,8 @@ namespace plearn::rep {
 
 
 
-	class call_graph {
+	template <typename OpNode_T=op_node>
+	class call_graph_t {
 		public:
 			/**
 			 * flow_nodes are the union of input, output and internal nodes
@@ -43,17 +44,21 @@ namespace plearn::rep {
 			 * AKA the trainable parameters.
 			 */
 			hash_map<node_id, tensor_node> data_nodes_;
-			hash_map<node_id, op_node> op_nodes_;
+			hash_map<node_id, OpNode_T> op_nodes_;
 
 			vector<node_id> in_nodes_;
 			vector<node_id> out_nodes_;
 			vector<node_id> internal_nodes_;
 
-			friend bool operator==(const call_graph& a, const call_graph& b) = default;	
+			friend bool operator==(const call_graph_t& a, const call_graph_t& b) = default;	
 	};
 
 
-	class call_graph_builder {
+	using call_graph = call_graph_t<op_node>;
+
+
+	template <typename OpNode_T=op_node>
+	class call_graph_builder_t {
 		public:
 			node_id add_input_node(shape_t s) {
 				return add_flow_node(s, std::nullopt);
@@ -72,7 +77,7 @@ namespace plearn::rep {
 					vector<node_id> inputs, shape_t out_shape) {
 				node_id id = next_id_++;
 				auto out_id = add_flow_node(out_shape, id);
-				op_node on{id, op, inputs, out_id};
+				OpNode_T on{id, op, inputs, out_id};
 				op_nodes_[id] = on;
 				//add op to tensor node outputs
 				for (auto node_id: inputs) {
@@ -92,14 +97,25 @@ namespace plearn::rep {
 				}
 			}
 
-			call_graph build() {
+			void unset_output(node_id id) {
+				//remove from out and add to internal
+				auto it = std::find(out_nodes_.begin(), out_nodes_.end(), id);
+				if (it != out_nodes_.end()) {
+					out_nodes_.erase(it);
+					internal_nodes_.push_back(id);
+				} else {
+					throw std::runtime_error("node is not output");
+				}
+			}
+
+			call_graph_t<OpNode_T> build() {
 				return {
-					std::move(flow_nodes_),
-					std::move(data_nodes_),
-					std::move(op_nodes_),
-					std::move(in_nodes_),
-					std::move(out_nodes_),
-					std::move(internal_nodes_)
+					flow_nodes_,
+					data_nodes_,
+					op_nodes_,
+					in_nodes_,
+					out_nodes_,
+					internal_nodes_
 				};
 			}
 
@@ -120,7 +136,7 @@ namespace plearn::rep {
 			hash_map<node_id, tensor_node*> tensor_nodes_;
 			hash_map<node_id, tensor_node> flow_nodes_;
 			hash_map<node_id, tensor_node> data_nodes_;
-			hash_map<node_id, op_node> op_nodes_;
+			hash_map<node_id, OpNode_T> op_nodes_;
 			vector<node_id> in_nodes_;
 			vector<node_id> out_nodes_;
 			vector<node_id> internal_nodes_;
@@ -128,5 +144,6 @@ namespace plearn::rep {
 
 	};
 
+	using call_graph_builder = call_graph_builder_t<op_node>;
 
 }

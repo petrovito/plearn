@@ -77,6 +77,10 @@ namespace plearn::rep {
 			return result;
 		}
 
+		uint64_t operator[](int i) const {
+			return dims[i];
+		}
+
 		friend auto operator<=>(const shape_t&, const shape_t&) = default;
 	};
 	

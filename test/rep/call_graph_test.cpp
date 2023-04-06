@@ -1,3 +1,4 @@
+#include "rep/ops.h"
 #include <gtest/gtest.h>
 
 #include <rep/rep_types.h>
@@ -48,6 +49,27 @@ TEST(CallGraph, Builder) {
 	ASSERT_EQ(cg.op_nodes_[op2n_id].inputs_[0], flown_id);
 	ASSERT_EQ(cg.op_nodes_[op2n_id].inputs_[1], data2n_id);
 	ASSERT_EQ(cg.op_nodes_[op2n_id].out_, outn_id);
+
+	//Continue Building
+	
+	auto inn2_id = builder.add_input_node(shape_t{10});
+	auto [op3n_id, outn2_id] = builder.add_op_node(sub{}, {inn2_id, outn_id}, shape_t{10});
+	builder.make_output(outn2_id);
+
+	auto cg2 = builder.build();
+	
+	ASSERT_EQ(cg2.in_nodes_.size(), 2);
+	ASSERT_EQ(cg2.in_nodes_[0], inn_id);
+	ASSERT_EQ(cg2.in_nodes_[1], inn2_id);
+	ASSERT_EQ(cg2.out_nodes_.size(), 2);
+	ASSERT_EQ(cg2.out_nodes_[0], outn_id);
+	ASSERT_EQ(cg2.out_nodes_[1], outn2_id);
+	ASSERT_EQ(cg2.internal_nodes_.size(), 1);
+	ASSERT_EQ(cg2.internal_nodes_[0], flown_id);
+	ASSERT_EQ(cg2.flow_nodes_.size(), 5);
+	ASSERT_EQ(cg2.data_nodes_.size(), 2);
+	ASSERT_EQ(cg2.op_nodes_.size(), 3);
+
 }
 
 TEST(CallGraph, Runner) {
