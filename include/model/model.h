@@ -4,6 +4,7 @@
 #include "rep/call_graph.h"
 #include "rep/ops.h"
 #include "rep/rep_types.h"
+#include <cstdint>
 #include <environ/env_types.h>
 #include <environ/env_section.h>
 #include <memory>
@@ -103,6 +104,31 @@ namespace plearn::model {
 					ModelTensor square() const {
 						return get()->model_.add_operation(rep::square{}, get()->shape_, *this);
 					}
+
+				[[nodiscard]]
+					ModelTensor reduce_sum(int axis) const {
+						if (axis < 0 || axis >= get()->shape_.rank)
+							throw std::runtime_error("Invalid axis");
+						vector<uint64_t> dims;
+						for (int i = 0; i < get()->shape_.rank; ++i) {
+							if (i != axis) dims.push_back(get()->shape_.dims[i]);
+						}
+						shape_t out_shape{dims};
+						return get()->model_.add_operation(rep::reduce_sum(axis), out_shape, *this);
+					}
+
+				[[nodiscard]]
+					ModelTensor reduce_mean(int axis) const {
+						if (axis < 0 || axis >= get()->shape_.rank)
+							throw std::runtime_error("Invalid axis");
+						vector<uint64_t> dims;
+						for (int i = 0; i < get()->shape_.rank; ++i) {
+							if (i != axis) dims.push_back(get()->shape_.dims[i]);
+						}
+						shape_t out_shape{dims};
+						return get()->model_.add_operation(rep::reduce_mean(axis), out_shape, *this);
+					}
+
 
 				void set_tensor(tensor_p t) { get()->model_.set_variable_tensor(*this, t); }
 

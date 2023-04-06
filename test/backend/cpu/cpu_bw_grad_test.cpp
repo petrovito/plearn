@@ -61,6 +61,49 @@ TEST(CpuBwGrad, VecMatmul) {
 	}
 }
 
+TEST(CpuBwGrad, MatVecMul) {
+	tensor_p ten_a = env.create_tensor(shape_t{dim1, dim2});
+	tensor_p ten_b = env.create_tensor(shape_t{dim2});
+	tensor_p ten_c = env.create_tensor(shape_t{dim1});
+
+	auto a = ((cpu_tensor*)ten_a->back())->get_content()->buf;
+	auto b = ((cpu_tensor*)ten_b->back())->get_content()->buf;
+	auto c = ((cpu_tensor*)ten_c->back())->get_content()->buf;
+	std::fill_n(a, SIZE, 1.f);
+	std::fill_n(b, dim2, 2.f);
+	std::fill_n(c, dim1, 0.f);
+
+	_cpu_matvecmul(a, b, c, dim1, dim2);
+
+	gradient in1_grad = gradient{shape_t{dim1, dim2}, shape_t{1}, backend.create_tensor(shape_t{dim1, dim2, 1})};
+	gradient in2_grad = gradient{shape_t{dim2}, shape_t{1}, backend.create_tensor(shape_t{dim2, 1})};
+	gradient out_grad = gradient{shape_t{dim1}, shape_t{1}, backend.create_tensor(shape_t{dim1, 1})};
+
+	auto in1_grad_buf = ((cpu_tensor*)in1_grad.back_.get())->get_content()->buf;
+	auto in2_grad_buf = ((cpu_tensor*)in2_grad.back_.get())->get_content()->buf;
+	auto out_grad_buf = ((cpu_tensor*)out_grad.back_.get())->get_content()->buf;
+
+	std::fill_n(in1_grad_buf, SIZE, 0.f);
+	std::fill_n(in2_grad_buf, dim2, 0.f);
+	std::fill_n(out_grad_buf, dim1, 3.f);
+
+	cpu_bw_matvecmul bw;
+	vector<tensor_p> inputs = {ten_a, ten_b};
+	bw.reset(inputs, ten_c);
+
+	bw.update_grad(0, out_grad, in1_grad);
+	for (int i = 0; i < dim1; i++) {
+		for (int j = 0; j < dim2; j++) {
+			EXPECT_EQ(in1_grad_buf[i*dim2+j], 2*3);
+		}
+	}
+
+	bw.update_grad(1, out_grad, in2_grad);
+	for (int i = 0; i < dim2; i++) {
+		EXPECT_EQ(in2_grad_buf[i], 1*3*dim1);
+	}
+}
+
 TEST(CpuBwGrad, Square) {
 	tensor_p ten_a = env.create_tensor(shape_t{dim1});
 	tensor_p ten_b = env.create_tensor(shape_t{dim1});
@@ -213,5 +256,108 @@ TEST(CpuBwGrad, Mult) {
 		EXPECT_EQ(in2_grad_buf[i], 3*1);
 	}
 }
+
+TEST(CpuBwGrad, DotProduct) {
+	tensor_p ten_a = env.create_tensor(shape_t{dim1});
+	tensor_p ten_b = env.create_tensor(shape_t{dim1});
+	tensor_p ten_c = env.create_tensor(shape_t{1});
+
+	auto a = ((cpu_tensor*)ten_a->back())->get_content()->buf;
+	auto b = ((cpu_tensor*)ten_b->back())->get_content()->buf;
+	auto c = ((cpu_tensor*)ten_c->back())->get_content()->buf;
+
+	std::fill_n(a, dim1, 1.f);
+	std::fill_n(b, dim1, 2.f);
+
+	_cpu_dot_product(a, b, c, dim1);
+
+	gradient in1_grad = gradient{shape_t{dim1}, shape_t{1}, backend.create_tensor(shape_t{dim1, 1})};
+	gradient in2_grad = gradient{shape_t{dim1}, shape_t{1}, backend.create_tensor(shape_t{dim1, 1})};
+	gradient out_grad = gradient{shape_t{1}, shape_t{1}, backend.create_tensor(shape_t{1, 1})};
+
+	auto in1_grad_buf = ((cpu_tensor*)in1_grad.back_.get())->get_content()->buf;
+	auto in2_grad_buf = ((cpu_tensor*)in2_grad.back_.get())->get_content()->buf;
+	auto out_grad_buf = ((cpu_tensor*)out_grad.back_.get())->get_content()->buf;
+
+	std::fill_n(in1_grad_buf, dim1, 0.f);
+	std::fill_n(in2_grad_buf, dim1, 0.f);
+	std::fill_n(out_grad_buf, 1, 3.f);
+
+	cpu_bw_dot_product bw;
+	vector<tensor_p> inputs = {ten_a, ten_b};
+	bw.reset(inputs, ten_c);
+
+	bw.update_grad(0, out_grad, in1_grad);
+	for (int i = 0; i < dim1; i++) {
+		EXPECT_EQ(in1_grad_buf[i], 3*2);
+	}
+
+	bw.update_grad(1, out_grad, in2_grad);
+	for (int i = 0; i < dim1; i++) {
+		EXPECT_EQ(in2_grad_buf[i], 3*1);
+	}
+}
+
+TEST(CpuBwGrad, ReduceSum) {
+	tensor_p ten_a = env.create_tensor(shape_t{dim1, dim2});
+	tensor_p ten_b = env.create_tensor(shape_t{dim1});
+
+	auto a = ((cpu_tensor*)ten_a->back())->get_content()->buf;
+	auto b = ((cpu_tensor*)ten_b->back())->get_content()->buf;
+	std::fill_n(a, SIZE, 1.f);
+	std::fill_n(b, dim1, 0.f);
+
+	_cpu_reduce_sum(a, b, dim1, {dim1, dim2});
+
+	gradient in1_grad = gradient{shape_t{dim1,dim2}, shape_t{1}, backend.create_tensor(shape_t{dim1, dim2, 1})};
+	gradient out_grad = gradient{shape_t{dim1}, shape_t{1}, backend.create_tensor(shape_t{dim1, 1})};
+
+	auto in1_grad_buf = ((cpu_tensor*)in1_grad.back_.get())->get_content()->buf;
+	auto out_grad_buf = ((cpu_tensor*)out_grad.back_.get())->get_content()->buf;
+
+	std::fill_n(in1_grad_buf, dim1, 0.f);
+	std::fill_n(out_grad_buf, dim1, 3.f);
+
+	cpu_bw_reduce_sum bw(1);
+	vector<tensor_p> inputs = {ten_a};
+	bw.reset(inputs, ten_b);
+
+	bw.update_grad(0, out_grad, in1_grad);
+	for (int i = 0; i < dim1; i++) {
+		EXPECT_EQ(in1_grad_buf[i], 3);
+	}
+}
+
+TEST(CpuBwGrad, ReduceMean) {
+	tensor_p ten_a = env.create_tensor(shape_t{dim1, dim2});
+	tensor_p ten_b = env.create_tensor(shape_t{dim1});
+
+	auto a = ((cpu_tensor*)ten_a->back())->get_content()->buf;
+	auto b = ((cpu_tensor*)ten_b->back())->get_content()->buf;
+	std::fill_n(a, SIZE, 1.f);
+	std::fill_n(b, dim1, 0.f);
+
+	_cpu_reduce_mean(a, b, dim1, {dim1, dim2});
+
+	gradient in1_grad = gradient{shape_t{dim1, dim2}, shape_t{1}, backend.create_tensor(shape_t{dim1, dim2, 1})};
+	gradient out_grad = gradient{shape_t{dim1}, shape_t{1}, backend.create_tensor(shape_t{dim1, 1})};
+
+	auto in1_grad_buf = ((cpu_tensor*)in1_grad.back_.get())->get_content()->buf;
+	auto out_grad_buf = ((cpu_tensor*)out_grad.back_.get())->get_content()->buf;
+
+	std::fill_n(in1_grad_buf, dim1, 0.f);
+	std::fill_n(out_grad_buf, dim1, 3.f);
+
+	cpu_bw_reduce_mean bw(1);
+	vector<tensor_p> inputs = {ten_a};
+	bw.reset(inputs, ten_b);
+
+	bw.update_grad(0, out_grad, in1_grad);
+	for (int i = 0; i < dim1; i++) {
+		EXPECT_EQ(in1_grad_buf[i], 3.f/dim2);
+	}
+
+}
+
 }
 

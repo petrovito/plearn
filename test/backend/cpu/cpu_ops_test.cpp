@@ -115,21 +115,31 @@ TEST(CpuOpTest, Mult) {
 	delete[] c;
 }
 
-/* TEST(CpuOpTest, MatmulAvx) { */
-/* 	auto a = new (std::align_val_t(32)) float[SIZE]; */
-/* 	auto b = new (std::align_val_t(32)) float[SIZE]; */
-/* 	auto c = new (std::align_val_t(32)) float[SIZE]; */
-/* 	std::fill_n(a, SIZE, 1); */
-/* 	std::fill_n(b, SIZE, 1); */
-/* 	std::fill_n(c, SIZE, 0); */
+TEST(CpuOpTest, ReduceSum) {
+	auto a = new (std::align_val_t(32)) float[SIZE];
+	auto b = new (std::align_val_t(32)) float[dim];
+	std::fill_n(a, SIZE, 2.f);
+	std::fill_n(b, dim, 0.f);
 
-/* 	_cpu_matmul_avx(a, b, c, dim, dim, dim); */
-/* 	for (int i = 0; i < dim; i++) */
-/* 		for (int j = 0; j < dim; j++) */
-/* 			ASSERT_DOUBLE_EQ(dim, c[i*dim +j]); */
+	_cpu_reduce_sum(a, b, 1, {dim, dim});
+	for (int i = 0; i < dim; i++)
+		ASSERT_DOUBLE_EQ(2*dim, b[i]);
 
-/* 	delete[] a; */
-/* 	delete[] b; */
-/* 	delete[] c; */
-/* } */
+	delete[] a;
+	delete[] b;
+}
+
+TEST(CpuOpTest, ReduceMean) {
+	auto a = new (std::align_val_t(32)) float[SIZE];
+	auto b = new (std::align_val_t(32)) float[dim];
+	std::fill_n(a, SIZE, 2.f);
+	std::fill_n(b, dim, 0.f);
+
+	_cpu_reduce_mean(a, b, 1, {dim, dim});
+	for (int i = 0; i < dim; i++)
+		ASSERT_DOUBLE_EQ(2, b[i]);
+
+	delete[] a;
+	delete[] b;
+}
 

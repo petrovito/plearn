@@ -17,19 +17,15 @@ namespace plearn::rep {
 		add,
 		mult,
 		square,
+
+		reduce_sum,
+		reduce_mean,
 	};
 
-	/**
-	 * Instruction on how to modify output tensor
-	 */
-	enum class output_modify_t {
-		set,
-		add,
-		substract,
-	};
 
 	struct operation {
 		op_type type_;
+		int iarg0_{};
 		friend auto operator<=>(const operation&, const operation&) = default;
 	};
 
@@ -67,6 +63,14 @@ namespace plearn::rep {
 
 	struct square : public operation {
 		square() : operation{op_type::square} {}
+	};
+
+	struct reduce_sum : public operation {
+		reduce_sum(int dim) : operation{op_type::reduce_sum, dim} {}
+	};
+
+	struct reduce_mean : public operation {
+		reduce_mean(int dim) : operation{op_type::reduce_mean, dim} {}
 	};
 
 

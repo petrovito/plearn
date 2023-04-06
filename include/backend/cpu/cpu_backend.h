@@ -34,6 +34,9 @@ namespace plearn::backend::cpu {
 					case op_type::vecmatmul:
 						cpu_vecmatmul(op, in, out);
 						break;
+					case op_type::matvecmul:
+						cpu_matvecmul(op, in, out);
+						break;
 					case op_type::add:
 						cpu_add(op, in, out);
 						break;
@@ -45,6 +48,15 @@ namespace plearn::backend::cpu {
 						break;
 					case op_type::square:
 						cpu_square(op, in, out);
+						break;
+					case op_type::reduce_sum:
+						cpu_reduce_sum(op, in, out);
+						break;
+					case op_type::reduce_mean:
+						cpu_reduce_mean(op, in, out);
+						break;
+					case op_type::dot_product:
+						cpu_dot_product(op, in, out);
 						break;
 				}
 			}
@@ -103,6 +115,8 @@ namespace plearn::backend::cpu {
 						break;
 					case op_type::vecmatmul:
 						return std::make_unique<cpu_bw_vecmatmul>();
+					case op_type::matvecmul:
+						return std::make_unique<cpu_bw_matvecmul>();
 					case op_type::square:
 						return std::make_unique<cpu_bw_square>();
 					case op_type::add:
@@ -111,6 +125,12 @@ namespace plearn::backend::cpu {
 						return std::make_unique<cpu_bw_sub>();
 					case op_type::mult:
 						return std::make_unique<cpu_bw_mult>();
+					case op_type::reduce_sum:
+						return std::make_unique<cpu_bw_reduce_sum>(op.iarg0_);
+					case op_type::reduce_mean:
+						return std::make_unique<cpu_bw_reduce_mean>(op.iarg0_);
+					case op_type::dot_product:
+						return std::make_unique<cpu_bw_dot_product>();
 
 				}
 				throw std::runtime_error("Not implemented");

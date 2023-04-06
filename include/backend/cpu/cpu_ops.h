@@ -64,5 +64,29 @@ namespace plearn::backend::cpu {
 		_cpu_mult(mat1, mat2, mat_out, size);
 	}
 
+	inline void cpu_dot_product(operation, const vector<cpu_tensor*>& inputs, cpu_tensor*& output) {
+		auto mat1 = inputs[0]->get_content()->buf;		
+		auto mat2 = inputs[1]->get_content()->buf;		
+		auto mat_out = output->get_content()->buf;
+		auto size = inputs[0]->shape().size();
+		_cpu_dot_product(mat1, mat2, mat_out, size);
+	}
+	
+	inline void cpu_reduce_sum(operation op, const vector<cpu_tensor*>& inputs, cpu_tensor*& output) {
+		auto mat1 = inputs[0]->get_content()->buf;		
+		auto mat_out = output->get_content()->buf;
+		auto& shape = inputs[0]->shape();
+		auto axis = op.iarg0_;
+		_cpu_reduce_sum(mat1, mat_out, axis, shape.dims);
+	}
+
+	inline void cpu_reduce_mean(operation op, const vector<cpu_tensor*>& inputs, cpu_tensor*& output) {
+		auto mat1 = inputs[0]->get_content()->buf;		
+		auto mat_out = output->get_content()->buf;
+		auto& shape = inputs[0]->shape();
+		auto axis = op.iarg0_;
+		_cpu_reduce_mean(mat1, mat_out, axis, shape.dims);
+	}
+
 }
 

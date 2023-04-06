@@ -58,7 +58,12 @@ namespace plearn::rep {
 		/* 	} */
 
 		shape_t(vector<uint64_t> _dims) : 
-			rank{_dims.size()}, dims{_dims} {}
+			rank{_dims.size()}, dims{_dims} {
+				if (rank == 0) {
+					dims.push_back(1);
+					rank = 1;
+				}
+			}
 
 		shape_t(std::integral auto...dims) : 
 			rank{sizeof...(dims)}, dims{dims...} {}
