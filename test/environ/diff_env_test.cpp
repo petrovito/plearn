@@ -38,7 +38,7 @@ TEST(BwDiffEnv, Builder) {
 	auto mock_backend = std::make_unique<MockBackend>();
 
 	auto bw_de_builder = bw_diff_page_builder(cg, diff_graph.get(), mock_backend.get());
-	auto bw_diff_page = bw_de_builder.allocate_grad_tensors().build();
+	auto bw_diff_page = bw_de_builder.build();
 
 	auto grad_sys = bw_diff_page->get_grad_system();
 

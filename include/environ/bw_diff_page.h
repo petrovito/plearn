@@ -115,14 +115,31 @@ namespace plearn::env {
 				cg_(cg), diff_info_(diff_info), backend_(backend) {}
 
 
+			bw_diff_page_builder& batch_size(int batch_size) {
+				batch_size_ = batch_size;
+				return *this;
+			}
+
+			unique_ptr<bw_diff_page> build() {
+				allocate_grad_tensors();
+				return std::make_unique<bw_diff_page>(
+						cg_, diff_info_,
+						std::move(op_diff_envs_), std::move(grad_system_));
+			}
+
+		private:
+			shape_t batch_shape(const shape_t& shape) const {
+				return batch_size_ == 1 ? shape : shape_t{batch_size_} * shape;
+			}
+
 			bw_diff_page_builder& allocate_grad_tensors() {
 				//insert output nodes as identity
 				for (auto& outn_id: cg_.out_nodes_) {
 					auto& outn = cg_.flow_nodes_.at(outn_id);
-					auto grad_tens_shape = outn.shape_ * outn.shape_;
+					auto grad_tens_shape = batch_shape(outn.shape_ * outn.shape_);
 					auto back_tens = backend_->create_tensor(grad_tens_shape, tensor_init::identity).release();
 					grad_system_[outn_id][outn_id] = {outn_id, outn_id, 
-						{outn.shape_, outn.shape_, shared_ptr<tensor_back_t>(back_tens)}, true};
+						{outn.shape_, outn.shape_, shared_ptr<tensor_back_t>(back_tens), batch_size_}, true};
 				}
 				//insert flow and data nodes
 				//flow nodes
@@ -135,10 +152,10 @@ namespace plearn::env {
 						//only if outn depends on flown
 						if (!deps.output_dependant(outn_id)) continue;
 						auto& outn = cg_.flow_nodes_.at(outn_id);
-						auto grad_tens_shape = flown.shape_ * outn.shape_;
+						auto grad_tens_shape = batch_shape(flown.shape_ * outn.shape_);
 						auto back_tens = backend_->create_tensor(grad_tens_shape).release();
 						grad_system_[flown_id][outn_id] = {flown_id, outn_id, 
-							{flown.shape_, outn.shape_, shared_ptr<tensor_back_t>(back_tens)}, false};
+							{flown.shape_, outn.shape_, shared_ptr<tensor_back_t>(back_tens), batch_size_}, false};
 					}
 				}
 				//data nodes
@@ -150,10 +167,10 @@ namespace plearn::env {
 						//only if outn depends on flown
 						if (!deps.output_dependant(outn_id)) continue;
 						auto& outn = cg_.flow_nodes_.at(outn_id);
-						auto grad_tens_shape = datan.shape_ * outn.shape_;
+						auto grad_tens_shape = batch_shape(datan.shape_ * outn.shape_);
 						auto back_tens = backend_->create_tensor(grad_tens_shape).release();
 						grad_system_[datan_id][outn_id] = {datan_id, outn_id, 
-							{datan.shape_, outn.shape_, shared_ptr<tensor_back_t>(back_tens)}, false};
+							{datan.shape_, outn.shape_, shared_ptr<tensor_back_t>(back_tens), batch_size_}, false};
 					}
 				}
 				//populate op_diff_envs_
@@ -169,19 +186,16 @@ namespace plearn::env {
 				}
 				return *this;
 			}
-			unique_ptr<bw_diff_page> build() {
-				return std::make_unique<bw_diff_page>(
-						cg_, diff_info_,
-						std::move(op_diff_envs_), std::move(grad_system_));
-			}
 
-		private:
+
 			const call_graph& cg_;
 			borrowed_ptr<diff_info> diff_info_;
 			borrowed_ptr<backend_t> backend_;
 
 			unordered_map<op_node_id, unique_ptr<bw_op_diff_env>> op_diff_envs_;
 			grad_system grad_system_;
+
+			int batch_size_ = 1;
 	};
 
 }

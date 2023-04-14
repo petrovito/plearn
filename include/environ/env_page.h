@@ -100,6 +100,21 @@ namespace plearn::env {
 				}
                 return result;
             }
+			
+			exec_result batch_execute(exec_params& params) {
+				exec_page_tensors exec_tensors{
+					exec_page_->resources().internal_tensors_,
+					data_tensors_, 
+					params.inputs_, params.outputs_};
+
+				auto result = exec_page_->execute(exec_tensors);
+
+				if (params.calc_diffs) {
+					diff_page_->calc_diffs(exec_tensors);
+					result.grad_system_ = diff_page_->get_grad_system();
+				}
+				return result;
+			}
 
 			void set_diff_page(unique_ptr<diff_page>&& diff_page) {
 				diff_page_ = std::move(diff_page);

@@ -40,7 +40,13 @@ namespace plearn::env {
 
 			exec_result execute(exec_params& params) {
 				ensure_resources(params);
-				return env_page_->execute(params);
+				return batch_pages_[1]->execute(params);
+			}
+
+			exec_result batch_execute(exec_params& params) {
+				//TODO
+				/* ensure_resources(params); */
+				/* return env_page_->batch_execute(params); */
 			}
 
 			tensor_p& get_data_tensor(node_id id) {
@@ -54,44 +60,48 @@ namespace plearn::env {
 				data_tensors_[id] = tens;
 			}
 
-			void create_env_page(bool make_diff_page = false) {
-				unique_ptr<exec_page> exec_page = create_exec_page();
-				env_page_ = std::make_unique<env_page>(
+			void create_env_page(int batch_size = 1, bool make_diff_page = false) {
+				unique_ptr<exec_page> exec_page = create_exec_page(batch_size);
+				auto env_p = std::make_unique<env_page>(
 					std::move(exec_page), data_tensors_);
 
 				if (make_diff_page) {
-					unique_ptr<diff_page> diff_page = create_diff_page();
-					env_page_->set_diff_page(std::move(diff_page));
+					unique_ptr<diff_page> diff_page = create_diff_page(batch_size);
+					env_p->set_diff_page(std::move(diff_page));
 				}
+				batch_pages_[batch_size] = std::move(env_p);
 			}
 
 			
 
 		private:
 			void ensure_resources(exec_params& params) {
-				if (!env_page_.get()) {
-					create_env_page(params.calc_diffs);
+				if (!batch_pages_.contains(params.batch_size)) {
+					create_env_page(params.batch_size, params.calc_diffs);
+					return;
 				}
-				if (params.calc_diffs) {
-					if (!env_page_->has_diff_page())
-						env_page_->set_diff_page(create_diff_page());
+				auto& env_p = batch_pages_.at(params.batch_size);
+				if (params.calc_diffs && !env_p->has_diff_page()) {
+					env_p->set_diff_page(create_diff_page(params.batch_size));
 				}
 			}
 
 			//create exec page and allocate memory
-			unique_ptr<exec_page> create_exec_page() {
+			unique_ptr<exec_page> create_exec_page(int batch_size) {
 				exec_page_resources resources;
 				for (auto intn_id: cg_.internal_nodes_) {
 					auto& node = cg_.flow_nodes_.at(intn_id);
-					resources.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
+					auto shape = batch_size == 1 ? node.shape_ :
+						shape_t{batch_size} * node.shape_;
+					resources.internal_tensors_[intn_id] = env_->create_tensor(shape);
 				}
 				return std::make_unique<exec_page>(backend_, cg_, std::move(resources));
 			}
 
 			//create diff page and allocate memory
-			unique_ptr<diff_page> create_diff_page() {
+			unique_ptr<diff_page> create_diff_page(int batch_size) {
 				bw_diff_page_builder builder{cg_, diff_info_.get(), backend_};
-				return builder.allocate_grad_tensors().build();
+				return builder.batch_size(batch_size).build();
 			}
 
 
@@ -104,6 +114,7 @@ namespace plearn::env {
 
 			//subcomponents
 			unique_ptr<env_page> env_page_;
+			unordered_map<int, unique_ptr<env_page>> batch_pages_;
 
 			//calculation and resource mgmt components
 			borrowed_ptr<exec_env> env_;

@@ -90,6 +90,7 @@ namespace plearn::env {
 			/* bool identity{false}; */
 
 			shared_ptr<tensor_back_t> back_{};
+			int batch_size{1};
 
 			borrowed_ptr<float> data() {return back_->data();}
 	};
@@ -117,6 +118,7 @@ namespace plearn::env {
 
 	struct exec_params {
 		bool calc_diffs{false};
+		int batch_size{1};
 
 		unordered_map<node_id, tensor_p> inputs_{};
 		unordered_map<node_id, tensor_p> outputs_{};
