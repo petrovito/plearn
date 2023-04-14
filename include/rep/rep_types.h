@@ -15,14 +15,11 @@ namespace plearn::rep {
 	using std::vector;
 	using std::unordered_set;
 	using std::unique_ptr;
+	using std::unordered_map;
 
 	using node_id = int;
 	using op_node_id = node_id;
 	using tensor_node_id = node_id;
-
-	template<typename K, typename V>
-	using hash_map = std::unordered_map<K, V>;
-
 
 
 	template<typename T>

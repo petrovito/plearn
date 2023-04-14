@@ -229,14 +229,11 @@ namespace plearn::model {
 			}
 
 			void compile() {
+				if (!uncompiled_) throw std::runtime_error("Model already compiled.");
 				if (uncommited_) commit();
 				cg_ = cg_builder_.build();
 				env_section_builder section_builder(exec_env_, exec_env_->backend(), cg_);
-				env_section_ = section_builder
-					.create_diff_info()
-					.create_bw_diff()
-					.allocate_internal_tensors()
-					.build();
+				env_section_ = section_builder.build();
 				uncompiled_ = false;
 			}
 

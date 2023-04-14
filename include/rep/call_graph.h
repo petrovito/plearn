@@ -37,14 +37,14 @@ namespace plearn::rep {
 			 * flow_nodes are the union of input, output and internal nodes
 			 * Where data flows through the graph.
 			 */
-			hash_map<node_id, tensor_node> flow_nodes_;
+			unordered_map<node_id, tensor_node> flow_nodes_;
 			/**
 			 * Data nodes are the "parameters of the graph", the ones that are not
 			 * influenced by the data flowing through the graph.
 			 * AKA the trainable parameters.
 			 */
-			hash_map<node_id, tensor_node> data_nodes_;
-			hash_map<node_id, OpNode_T> op_nodes_;
+			unordered_map<node_id, tensor_node> data_nodes_;
+			unordered_map<node_id, OpNode_T> op_nodes_;
 
 			vector<node_id> in_nodes_;
 			vector<node_id> out_nodes_;
@@ -133,10 +133,10 @@ namespace plearn::rep {
 				return id;
 			}
 
-			hash_map<node_id, tensor_node*> tensor_nodes_;
-			hash_map<node_id, tensor_node> flow_nodes_;
-			hash_map<node_id, tensor_node> data_nodes_;
-			hash_map<node_id, OpNode_T> op_nodes_;
+			unordered_map<node_id, tensor_node*> tensor_nodes_;
+			unordered_map<node_id, tensor_node> flow_nodes_;
+			unordered_map<node_id, tensor_node> data_nodes_;
+			unordered_map<node_id, OpNode_T> op_nodes_;
 			vector<node_id> in_nodes_;
 			vector<node_id> out_nodes_;
 			vector<node_id> internal_nodes_;

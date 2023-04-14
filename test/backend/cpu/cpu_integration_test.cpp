@@ -27,7 +27,7 @@ TEST(CpuBackendIntegration, Execute) {
 	unique_ptr<cpu_backend> backend = std::make_unique<cpu_backend>();
 	unique_ptr<exec_env> env = std::make_unique<exec_env>(backend.get());
 
-	hash_map<node_id, tensor_p> data_tensors;
+	unordered_map<node_id, tensor_p> data_tensors;
 	data_tensors[data1n_id] = env->create_tensor(cg.data_nodes_.at(data1n_id).shape_);
 	{
 		auto buf = ((cpu_tensor*) data_tensors[data1n_id]->back())->get_content()->buf;
@@ -55,7 +55,6 @@ TEST(CpuBackendIntegration, Execute) {
 
 	env_section_builder section_builder{env.get(), backend.get(), cg};
 	auto section = section_builder
-		.allocate_internal_tensors()
 		.set_data_tensors(std::move(data_tensors))
 		.build();
 
@@ -88,7 +87,7 @@ TEST(CpuBackendIntegration, Execute) {
 	}
 }
 
-
+/* FW IS DEPRECATED
 TEST(CpuBackendIntegration, DiffFw) {
 	call_graph_builder cg_builder;
 
@@ -107,7 +106,7 @@ TEST(CpuBackendIntegration, DiffFw) {
 	unique_ptr<cpu_backend> backend = std::make_unique<cpu_backend>();
 	unique_ptr<exec_env> env = std::make_unique<exec_env>(backend.get());
 
-	hash_map<node_id, tensor_p> data_tensors;
+	unordered_map<node_id, tensor_p> data_tensors;
 	data_tensors[data1n_id] = env->create_tensor(cg.data_nodes_.at(data1n_id).shape_);
 	{
 		auto buf = ((cpu_tensor*) data_tensors[data1n_id]->back())->get_content()->buf;
@@ -135,10 +134,7 @@ TEST(CpuBackendIntegration, DiffFw) {
 
 	env_section_builder section_builder{env.get(), backend.get(), cg};
 	auto section = section_builder
-		.allocate_internal_tensors()
 		.set_data_tensors(std::move(data_tensors))
-		.create_diff_info()
-		.create_fp_diff()
 		.build();
 
 	{
@@ -198,7 +194,6 @@ TEST(CpuBackendIntegration, DiffFw) {
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[2], 15);
 	}
 }
-
 
 TEST(CpuBackendIntegration, DiffFw2) {
 	call_graph_builder cg_builder;
@@ -218,7 +213,7 @@ TEST(CpuBackendIntegration, DiffFw2) {
 	unique_ptr<cpu_backend> backend = std::make_unique<cpu_backend>();
 	unique_ptr<exec_env> env = std::make_unique<exec_env>(backend.get());
 
-	hash_map<node_id, tensor_p> data_tensors;
+	unordered_map<node_id, tensor_p> data_tensors;
 	data_tensors[data1n_id] = env->create_tensor(cg.data_nodes_.at(data1n_id).shape_);
 	{
 		auto buf = ((cpu_tensor*) data_tensors[data1n_id]->back())->get_content()->buf;
@@ -246,10 +241,7 @@ TEST(CpuBackendIntegration, DiffFw2) {
 
 	env_section_builder section_builder{env.get(), backend.get(), cg};
 	auto section = section_builder
-		.allocate_internal_tensors()
 		.set_data_tensors(std::move(data_tensors))
-		.create_diff_info()
-		.create_fp_diff()
 		.build();
 
 	exec_params params{.calc_diffs = true};
@@ -278,6 +270,7 @@ TEST(CpuBackendIntegration, DiffFw2) {
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[1], 12);
 	EXPECT_FLOAT_EQ(data2_out_grad_buf[2], 15);
 }
+*/
 
 
 TEST(CpuBackendIntegration, DiffBw) {
@@ -298,7 +291,7 @@ TEST(CpuBackendIntegration, DiffBw) {
 	unique_ptr<cpu_backend> backend = std::make_unique<cpu_backend>();
 	unique_ptr<exec_env> env = std::make_unique<exec_env>(backend.get());
 
-	hash_map<node_id, tensor_p> data_tensors;
+	unordered_map<node_id, tensor_p> data_tensors;
 	data_tensors[data1n_id] = env->create_tensor(cg.data_nodes_.at(data1n_id).shape_);
 	{
 		auto buf = ((cpu_tensor*) data_tensors[data1n_id]->back())->get_content()->buf;
@@ -326,10 +319,7 @@ TEST(CpuBackendIntegration, DiffBw) {
 
 	env_section_builder section_builder{env.get(), backend.get(), cg};
 	auto section = section_builder
-		.allocate_internal_tensors()
 		.set_data_tensors(std::move(data_tensors))
-		.create_diff_info()
-		.create_bw_diff()
 		.build();
 
 	for (int i = 0; i < 2; ++i)

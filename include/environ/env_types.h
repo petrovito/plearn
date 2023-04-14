@@ -118,8 +118,8 @@ namespace plearn::env {
 	struct exec_params {
 		bool calc_diffs{false};
 
-		hash_map<node_id, tensor_p> inputs_{};
-		hash_map<node_id, tensor_p> outputs_{};
+		unordered_map<node_id, tensor_p> inputs_{};
+		unordered_map<node_id, tensor_p> outputs_{};
 	};
 
 	struct exec_result {
@@ -218,10 +218,10 @@ namespace plearn::env {
 	/**
 	 * Container for all the tensors that are required for call graph executions.
 	 */
-	struct section_exec_tensors {
+	struct exec_page_tensors {
 		template<typename... Args>
-		section_exec_tensors(
-				hash_map<node_id, tensor_p>& tensors,
+		exec_page_tensors(
+				const unordered_map<node_id, tensor_p>& tensors,
 				Args&&... other_tens
 
 				) :
@@ -229,19 +229,11 @@ namespace plearn::env {
 				(tensors_.insert(other_tens.begin(), other_tens.end()), ...);
 
 			}
-		hash_map<node_id, tensor_p> tensors_;
+		unordered_map<node_id, tensor_p> tensors_;
 
 		tensor_p& operator[](node_id id) { return tensors_[id]; }
 	};
 
-	class diff_env {
-		public:
-			virtual void calc_diff(const op_node& opn, const vector<tensor_p>& inputs, const tensor_p& output) = 0;
-			virtual void calc_diffs(section_exec_tensors&) = 0;
-			virtual void reset() = 0;
-			virtual borrowed_ptr<grad_system> get_grad_system() = 0;
-			virtual ~diff_env() = default;
-	};
 
 
 }

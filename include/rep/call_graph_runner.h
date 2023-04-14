@@ -106,7 +106,7 @@ namespace plearn::rep {
 			const call_graph& cg_;
 			run_state state_ = run_state::READY;
 			unordered_set<op_node_id> ready_ops_;
-			hash_map<op_node_id, node_info> op_info_;
+			unordered_map<op_node_id, node_info> op_info_;
 			int unready_out_tens_;
 	};
 

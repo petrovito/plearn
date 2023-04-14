@@ -93,9 +93,9 @@ namespace plearn::rep {
 		}
 
 		op_node op_node_;//TODO should be reference, except identity is problematic
-		hash_map<node_id, dep_type> op_input_deps_{}; //describes dependencies on input tensors of the op
-		hash_map<node_id, dep_type> variable_deps_{}; //describes dependencies on variables of the system
-		hash_map<node_id, dep_type> output_deps_{}; //describes output dependencies WRT this node
+		unordered_map<node_id, dep_type> op_input_deps_{}; //describes dependencies on input tensors of the op
+		unordered_map<node_id, dep_type> variable_deps_{}; //describes dependencies on variables of the system
+		unordered_map<node_id, dep_type> output_deps_{}; //describes output dependencies WRT this node
 	};
 
 
@@ -105,7 +105,7 @@ namespace plearn::rep {
 			diff_info(
 					vector<node_id>&& variable_nodes,
 					vector<node_id>&& output_nodes,
-					hash_map<node_id, node_diff_info>&& derivatives
+					unordered_map<node_id, node_diff_info>&& derivatives
 					) :
 				variable_nodes_{std::move(variable_nodes)},
 				output_nodes_{std::move(output_nodes)},
@@ -113,11 +113,11 @@ namespace plearn::rep {
 
 			//getters
 			const vector<node_id>& variable_nodes() const { return variable_nodes_; }
-			const hash_map<node_id, node_diff_info>& dependencies() const { return dependencies_; }
+			const unordered_map<node_id, node_diff_info>& dependencies() const { return dependencies_; }
 		private:
 			vector<node_id> variable_nodes_;
 			vector<node_id> output_nodes_;
-			hash_map<node_id, node_diff_info> dependencies_;
+			unordered_map<node_id, node_diff_info> dependencies_;
 	};
 	
 
@@ -224,7 +224,7 @@ namespace plearn::rep {
 			const call_graph& graph_;
 			vector<node_id> variable_nodes_;
 			vector<node_id> output_nodes_;
-			hash_map<node_id, node_diff_info> dependencies_;
+			unordered_map<node_id, node_diff_info> dependencies_;
 	};
 	
 }

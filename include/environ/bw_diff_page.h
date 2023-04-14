@@ -14,6 +14,7 @@
 #include <rep/diff_info.h>
 #include <environ/env_types.h>
 #include <environ/exec_env.h>
+#include <environ/env_page.h>
 
 namespace plearn::env {
 
@@ -50,16 +51,15 @@ namespace plearn::env {
 	};
 
 
-	class bw_diff_env : public diff_env {
+	class bw_diff_page : public diff_page {
 		public:
-			bw_diff_env(
+			bw_diff_page(
 					const call_graph& cg,
 					borrowed_ptr<diff_info> diff_info,
-					borrowed_ptr<backend_t> backend,
 					unordered_map<op_node_id, unique_ptr<bw_op_diff_env>>&& op_diff_envs,
 					grad_system&& grad_system
 					) :
-				cg_(cg), diff_info_(diff_info), backend_(backend),
+				cg_(cg), diff_info_(diff_info),
 				op_diff_envs_(std::move(op_diff_envs)), grad_system_(std::move(grad_system)) {}
 
 			void reset() override {
@@ -72,12 +72,8 @@ namespace plearn::env {
 				}
 			}
 
-			void calc_diff(const op_node& opn, 
-					const vector<tensor_p>& inputs, const tensor_p& output) override {
-				op_diff_envs_[opn.id_]->execute(inputs, output);
-			}
-
-			void calc_diffs(section_exec_tensors& tensors) override {
+			void calc_diffs(exec_page_tensors& tensors) override {
+				reset();
 				call_graph_backward_runner runner{cg_};
 				runner.run([this, &tensors] (auto& opn) {
 					vector<tensor_p> inputs(opn.inputs_.size());
@@ -91,18 +87,27 @@ namespace plearn::env {
 			borrowed_ptr<grad_system> get_grad_system() override { return &grad_system_; }
 
 		private:
+			void calc_diff(const op_node& opn, 
+					const vector<tensor_p>& inputs, const tensor_p& output) {
+				op_diff_envs_[opn.id_]->execute(inputs, output);
+			}
+
+
+			//representations
 			const call_graph& cg_;
 			borrowed_ptr<diff_info> diff_info_;
-			borrowed_ptr<backend_t> backend_;
 
+			//calculating components
 			unordered_map<op_node_id, unique_ptr<bw_op_diff_env>> op_diff_envs_;
+
+			//held resources
 			grad_system grad_system_;
 	};
 
 
-	class bw_diff_env_builder {
+	class bw_diff_page_builder {
 		public:
-			bw_diff_env_builder(
+			bw_diff_page_builder(
 					const call_graph& cg,
 					borrowed_ptr<diff_info> diff_info,
 					borrowed_ptr<backend_t> backend
@@ -110,7 +115,7 @@ namespace plearn::env {
 				cg_(cg), diff_info_(diff_info), backend_(backend) {}
 
 
-			bw_diff_env_builder& allocate_grad_tensors() {
+			bw_diff_page_builder& allocate_grad_tensors() {
 				//insert output nodes as identity
 				for (auto& outn_id: cg_.out_nodes_) {
 					auto& outn = cg_.flow_nodes_.at(outn_id);
@@ -164,9 +169,9 @@ namespace plearn::env {
 				}
 				return *this;
 			}
-			unique_ptr<bw_diff_env> build() {
-				return std::make_unique<bw_diff_env>(
-						cg_, diff_info_, backend_, 
+			unique_ptr<bw_diff_page> build() {
+				return std::make_unique<bw_diff_page>(
+						cg_, diff_info_,
 						std::move(op_diff_envs_), std::move(grad_system_));
 			}
 

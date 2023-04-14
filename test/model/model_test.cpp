@@ -46,7 +46,8 @@ TEST(Model, Layers) {
 	auto output = dense.output();
 	m.compile();
 
-	dense.set_tensors(Tensors::create({3, 1}, new float[]{1, 2, 3}), Tensors::create({1}, new float[]{0}));
+	dense.set_tensors(Tensors::create({3, 1}, new float[]{1, 2, 3}), 
+					  Tensors::create({1}, new float[]{0}));
 	auto input_t = Tensors::create({3}, new float[]{2,4,6});
 	auto result = m.execute({input_t}, true);
 

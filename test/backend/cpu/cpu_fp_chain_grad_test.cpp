@@ -6,13 +6,14 @@
 
 namespace plearn::backend::cpu {
 
+//NOT USED ANYMORE!
 
-cpu_backend backend = cpu_backend{};
+// cpu_backend backend = cpu_backend{};
 
-TEST(CpuFpChainGrad, VecMatMul) {
-	operation op = vecmatmul{};	
-	/* tensor_p v = backend.create_tensor(shape_t{3}); */
-}
+// TEST(CpuFpChainGrad, VecMatMul) {
+// 	operation op = vecmatmul{};	
+// 	/* tensor_p v = backend.create_tensor(shape_t{3}); */
+// }
 
 }
 

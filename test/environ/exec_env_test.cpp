@@ -35,7 +35,7 @@ TEST(EnvSection, Execute) {
 	unique_ptr<MockBackend> mock_backend = std::make_unique<MockBackend>();
 	unique_ptr<MockExecEnv> mock_env = std::make_unique<MockExecEnv>(mock_backend.get());
 
-	hash_map<node_id, tensor_p> data_tensors;
+	unordered_map<node_id, tensor_p> data_tensors;
 	for (auto& [id, node]: cg.data_nodes_) {
 		data_tensors[id] = mock_env->create_tensor(node.shape_);
 	}
@@ -43,9 +43,6 @@ TEST(EnvSection, Execute) {
 	env_section_builder builder{mock_env.get(), mock_backend.get(), cg};
 	auto section = builder
 		.set_data_tensors(std::move(data_tensors))
-		.allocate_internal_tensors()
-		.create_diff_info()
-		.create_fp_diff()
 		.build();
 
 	exec_params params;

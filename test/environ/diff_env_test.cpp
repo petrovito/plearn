@@ -9,7 +9,7 @@
 #include "rep/diff_info.h"
 #include "rep/rep_types.h"
 #include <environ/fp_diff_env.h>
-#include <environ/bw_diff_env.h>
+#include <environ/bw_diff_page.h>
 #include <memory>
 
 namespace plearn::env {
@@ -37,10 +37,10 @@ TEST(BwDiffEnv, Builder) {
 
 	auto mock_backend = std::make_unique<MockBackend>();
 
-	auto bw_de_builder = bw_diff_env_builder(cg, diff_graph.get(), mock_backend.get());
-	auto bw_diff_env = bw_de_builder.allocate_grad_tensors().build();
+	auto bw_de_builder = bw_diff_page_builder(cg, diff_graph.get(), mock_backend.get());
+	auto bw_diff_page = bw_de_builder.allocate_grad_tensors().build();
 
-	auto grad_sys = bw_diff_env->get_grad_system();
+	auto grad_sys = bw_diff_page->get_grad_system();
 
 	ASSERT_EQ(grad_sys->size(), 5); //outn + flown + 2* datan + 1*inn
 

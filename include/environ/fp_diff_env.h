@@ -15,6 +15,7 @@
 #include <rep/diff_info.h>
 #include <environ/env_types.h>
 #include <environ/exec_env.h>
+#include <environ/env_page.h>
 
 namespace plearn::env {
 
@@ -67,7 +68,7 @@ namespace plearn::env {
 
 
 
-	class fp_diff_env : public diff_env {
+	class fp_diff_env : public diff_page {
 		public:
 			fp_diff_env(
 					const call_graph& cg,
@@ -122,7 +123,7 @@ namespace plearn::env {
 				}
 			}
 
-			void calc_diffs(section_exec_tensors& tensors) override {
+			void calc_diffs(exec_page_tensors& tensors) override {
 				call_graph_forward_runner runner{cg_};
 				runner.run([this, &tensors] (auto& opn) {
 					vector<tensor_p> inputs(opn.inputs_.size());
@@ -134,7 +135,7 @@ namespace plearn::env {
 			}
 
 			void calc_diff(const op_node& opn,
-					const vector<tensor_p>& inputs, const tensor_p& output) override {
+					const vector<tensor_p>& inputs, const tensor_p& output) {
 				op_diff_envs_[opn.id_]->execute(inputs, output);
 			}
 

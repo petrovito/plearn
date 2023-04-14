@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include <ranges>
+#include <unordered_map>
 #include <vector>
 
 #include <rep/rep_types.h>
@@ -14,130 +15,99 @@
 #include <rep/diff_info.h>
 #include <environ/env_types.h>
 #include <environ/exec_env.h>
+#include <environ/env_page.h>
 #include <environ/fp_diff_env.h>
-#include "environ/bw_diff_env.h"
+#include "environ/bw_diff_page.h"
 
 namespace plearn::env {
-
-
-	/**
-	 * Holds resourcers for ONE execution of a call graph.
-	 * Resources are managed by another component.
-	 *
-	 * Resources means internal tensors, that are not provided by an external component.
-	 */
-	struct section_resources {
-		hash_map<node_id, tensor_p> internal_tensors_;
-	};
-
-	/**
-	 * The class responsible ONLY for executing a call graph.
-	 * Has all the resources required provided by some other component.
-	 */
-	class section_executor {
-		public:
-			section_executor(const exec_params& params,
-					const call_graph& cg, 
-					const borrowed_ptr<backend_t> backend, 
-					section_exec_tensors& tensors) : 
-				params_{params}, cg_{cg},
-				backend_{backend}, tensors_{tensors} {}
-
-			void execute() {
-				call_graph_forward_runner runner{cg_};
-				runner.run([this] (const op_node& opn) {
-					auto& op = opn.op_;
-					//collect inputs and outputs
-					vector<tensor_p> inputs(opn.inputs_.size());
-					std::transform(opn.inputs_.begin(), opn.inputs_.end(), 
-							inputs.begin(), [this](auto id) { return tensors_[id]; });
-					tensor_p output = tensors_[opn.out_];
-					//execute operation
-					backend_->exec_op(op, inputs, output);
-				});
-
-				vector<tensor_p> outputs(cg_.out_nodes_.size());
-				std::transform(cg_.out_nodes_.begin(), cg_.out_nodes_.end(), 
-						outputs.begin(), [this](auto id) { return tensors_[id]; });
-			}
-		private:
-			const exec_params& params_;
-			const call_graph& cg_;
-			borrowed_ptr<backend_t> backend_;
-			section_exec_tensors& tensors_;
-	};
 
 	/**
 	 * A section is a component that is responsible for managing resources for operations 
 	 * on a call graph, i.e. execution/differentials.
+	 * Contains env_pages.
 	 */
 	class env_section {
 		public:
-			env_section(borrowed_ptr<exec_env> env, borrowed_ptr<backend_t> backend,
-					const call_graph& cg,
-					const hash_map<node_id, tensor_p>& data_tensors,
-					section_resources&& resources,
-					unique_ptr<diff_env>&& diff_env,
-					unique_ptr<diff_info>&& diff_info
+			env_section(
+					const call_graph& cg, unique_ptr<diff_info>&& diff_info,
+				    borrowed_ptr<exec_env> env, borrowed_ptr<backend_t> backend,
+					const unordered_map<node_id, tensor_p>& data_tensors
 					):
-				cg_{cg}, env_{env}, backend_{backend},
-				data_tensors_{data_tensors}, 
-				resources_{std::move(resources)},
-				diff_env_{std::move(diff_env)},
-				diff_info_{std::move(diff_info)} {}
+				cg_{cg}, diff_info_{std::move(diff_info)},
+				env_{env}, backend_{backend},
+				data_tensors_{data_tensors} 
+			{}
 
 			exec_result execute(exec_params& params) {
-				//prepare run
-				reset_internal_tensors();
-				if (params.calc_diffs) {
-					diff_env_->reset();
-				}
-				section_exec_tensors tensors{resources_.internal_tensors_, data_tensors_,
-					params.inputs_, params.outputs_};
-				
-				//start run
-				section_executor exec{params, cg_, backend_, tensors};
-				exec.execute();
-
-				exec_result result{.success_=true};
-
-				//calculate derivatives if required
-				if (params.calc_diffs) {
-					diff_env_->calc_diffs(tensors);
-					result.grad_system_ = diff_env_->get_grad_system();
-				}
-
-				return result;
+				ensure_resources(params);
+				return env_page_->execute(params);
 			}
 
-			tensor_p& get_tensor(node_id id) {
+			tensor_p& get_data_tensor(node_id id) {
 				if (data_tensors_.contains(id)) {
 					return data_tensors_.at(id);
-				} else {
-					return resources_.internal_tensors_.at(id);
 				}
+				throw std::runtime_error("tensor not found");
 			}
 
 			void set_data_tensor(node_id id, tensor_p tens) {
 				data_tensors_[id] = tens;
 			}
-			
 
-		private:
-			void reset_internal_tensors() {
-				for (auto& [id, tens]: resources_.internal_tensors_) {
-					tens->back()->zero();
+			void create_env_page(bool make_diff_page = false) {
+				unique_ptr<exec_page> exec_page = create_exec_page();
+				env_page_ = std::make_unique<env_page>(
+					std::move(exec_page), data_tensors_);
+
+				if (make_diff_page) {
+					unique_ptr<diff_page> diff_page = create_diff_page();
+					env_page_->set_diff_page(std::move(diff_page));
 				}
 			}
 
+			
+
+		private:
+			void ensure_resources(exec_params& params) {
+				if (!env_page_.get()) {
+					create_env_page(params.calc_diffs);
+				}
+				if (params.calc_diffs) {
+					if (!env_page_->has_diff_page())
+						env_page_->set_diff_page(create_diff_page());
+				}
+			}
+
+			//create exec page and allocate memory
+			unique_ptr<exec_page> create_exec_page() {
+				exec_page_resources resources;
+				for (auto intn_id: cg_.internal_nodes_) {
+					auto& node = cg_.flow_nodes_.at(intn_id);
+					resources.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
+				}
+				return std::make_unique<exec_page>(backend_, cg_, std::move(resources));
+			}
+
+			//create diff page and allocate memory
+			unique_ptr<diff_page> create_diff_page() {
+				bw_diff_page_builder builder{cg_, diff_info_.get(), backend_};
+				return builder.allocate_grad_tensors().build();
+			}
+
+
+			//representations
 			const call_graph& cg_;
 			unique_ptr<diff_info> diff_info_;
-			unique_ptr<diff_env> diff_env_;
+
+			//resources managed by this section
+			unordered_map<node_id, tensor_p> data_tensors_;
+
+			//subcomponents
+			unique_ptr<env_page> env_page_;
+
+			//calculation and resource mgmt components
 			borrowed_ptr<exec_env> env_;
 			borrowed_ptr<backend_t> backend_;
-
-			hash_map<node_id, tensor_p> data_tensors_;
-			section_resources resources_;
 
 			friend class EnvSection_Execute_Test;
 	};
@@ -148,55 +118,43 @@ namespace plearn::env {
 					const call_graph& cg) :  
 				cg_{cg}, env_{env}, backend_{backend} {}
 
-			env_section_builder& set_data_tensors(const hash_map<node_id, tensor_p>& data_tensors) {
+			env_section_builder& set_data_tensors(unordered_map<node_id, tensor_p>&& data_tensors) {
 				data_tensors_ = data_tensors;
 				return *this;
 			}
 
-			env_section_builder& allocate_internal_tensors() {
-				for (auto intn_id: cg_.internal_nodes_) {
-					auto& node = cg_.flow_nodes_.at(intn_id);
-					resources_.internal_tensors_[intn_id] = env_->create_tensor(node.shape_);
-				}
-				return *this;
-			}
+			// env_section_builder& create_fp_diff() {
+			// 	diff_env_ = std::make_unique<fp_diff_env>(cg_, diff_info_.get(), backend_);
+			// 	((fp_diff_env*)diff_env_.get())->init();
+			// 	return *this;
+			// }
 
-			env_section_builder& create_diff_info() {
+
+			[[nodiscard]]
+			unique_ptr<env_section> build() {
+				create_diff_info();
+				return std::make_unique<env_section>(
+						cg_, std::move(diff_info_),
+						env_, backend_, 
+						data_tensors_);
+			}
+		private:
+			void create_diff_info() {
 				diff_info_builder builder{cg_};
 				diff_info_ = builder
 					.all_data_nodes()
 					.find_dependencies()
 					.build();
-				return *this;
 			}
 
-			env_section_builder& create_fp_diff() {
-				diff_env_ = std::make_unique<fp_diff_env>(cg_, diff_info_.get(), backend_);
-				((fp_diff_env*)diff_env_.get())->init();
-				return *this;
-			}
-
-			env_section_builder& create_bw_diff() {
-				bw_diff_env_builder builder{cg_, diff_info_.get(), backend_};
-				diff_env_ = builder.allocate_grad_tensors().build();
-				return *this;
-			}
-
-
-			[[nodiscard]]
-			unique_ptr<env_section> build() {
-				return std::make_unique<env_section>(env_, backend_, cg_, data_tensors_, 
-					std::move(resources_), std::move(diff_env_), std::move(diff_info_));
-			}
-		private:
 			const call_graph& cg_;
 			borrowed_ptr<exec_env> env_;
 			borrowed_ptr<backend_t> backend_;
-			hash_map<node_id, tensor_p> data_tensors_;
+			unordered_map<node_id, tensor_p> data_tensors_;
 			unique_ptr<diff_info> diff_info_;
-			unique_ptr<diff_env> diff_env_;
+			unique_ptr<diff_page> diff_env_;
 
-			section_resources resources_;
+			exec_page_resources resources_;
 
 	};
 
