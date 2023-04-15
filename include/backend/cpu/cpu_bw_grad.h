@@ -22,40 +22,15 @@ namespace plearn::backend::cpu {
 			auto N = inputs_->at(1)->shape().dims[1];
 			const auto out_size = out_outn_grad.out_shape.size();
 			if (in_idx == 0) {
-				//M -> N -> out_shape
-				//in_out_grad(m,n) = other_input_buf(m,n)
-#define IN_OUTN_GRAD(m, a) in_outn_grad_buf[m *out_size + a]
-#define OUT_OUTN_GRAD(n, a) out_outn_grad_buf[n *out_size + a]
-#define OTHER_INPUT_BUF(m,n) other_input_buf[m *N + n]
-				for (uint64_t m = 0; m < M; ++m) {
-					for (uint64_t n = 0; n < N; ++n) {
-						for (uint64_t a = 0; a < out_size; ++a) {
-							IN_OUTN_GRAD(m, a) += OUT_OUTN_GRAD(n, a) * OTHER_INPUT_BUF(m,n);
-						}
-					}
+				for (uint64_t a = 0; a < out_size; ++a) {
+					_cpu_matvecmul(other_input_buf, out_outn_grad_buf + a, in_outn_grad_buf + a,
+							M, N);
 				}
-#undef IN_OUTN_GRAD
-#undef OUT_OUTN_GRAD
-#undef OTHER_INPUT_BUF
 			} else { //in_idx == 1
-				//MxN -> N -> out_shape
-				//in_out_grad(m,n1,n2) = 0 if n1 != n2 else other_input_buf(m)
-				//in_outn_grad = in_out_grad * out_outn_grad
-				//in_outn_grad(m,n1, a) = sum(n2) in_out_grad(m,n1,n2) * out_outn_grad(n2, a)
-				//          = other_input_buf(m) * out_outn_grad(n1, a)
-#define IN_OUTN_GRAD(m,n, a) in_outn_grad_buf[m *N*out_size + n *out_size + a]
-#define OUT_OUTN_GRAD(n, a) out_outn_grad_buf[n *out_size + a]
-#define OTHER_INPUT_BUF(m) other_input_buf[m]
-				for (uint64_t m = 0; m < M; ++m) {
-					for (uint64_t n = 0; n < N; ++n) {
-						for (uint64_t a = 0; a < out_size; ++a) {
-							IN_OUTN_GRAD(m,n, a) += OUT_OUTN_GRAD(n, a) * OTHER_INPUT_BUF(m);
-						}
-					}
+				for (uint64_t a = 0; a < out_size; ++a) {
+					_cpu_matmul(other_input_buf, out_outn_grad_buf + a, in_outn_grad_buf + a,
+							M, 1, N, true);
 				}
-#undef IN_OUTN_GRAD
-#undef OUT_OUTN_GRAD
-#undef OTHER_INPUT_BUF
 			}
 		}
 	};
@@ -73,40 +48,15 @@ namespace plearn::backend::cpu {
 			auto N = inputs_->at(0)->shape().dims[1];
 			const auto out_size = out_outn_grad.out_shape.size();
 			if (in_idx == 0) {
-				//M -> N -> out_shape
-				//in_out_grad(m,n) = other_input_buf(m,n)
-#define IN_OUTN_GRAD(m,n, a) in_outn_grad_buf[m *N*out_size + n *out_size + a]
-#define OUT_OUTN_GRAD(m, a) out_outn_grad_buf[m *out_size + a]
-#define OTHER_INPUT_BUF(n) other_input_buf[n]
-				for (uint64_t m = 0; m < M; ++m) {
-					for (uint64_t n = 0; n < N; ++n) {
-						for (uint64_t a = 0; a < out_size; ++a) {
-							IN_OUTN_GRAD(m,n, a) += OUT_OUTN_GRAD(m, a) * OTHER_INPUT_BUF(n);
-						}
-					}
+				for (uint64_t a = 0; a < out_size; ++a) {
+					_cpu_matmul(out_outn_grad_buf + a, other_input_buf, in_outn_grad_buf + a,
+							M, 1, N, true);
 				}
-#undef IN_OUTN_GRAD
-#undef OUT_OUTN_GRAD
-#undef OTHER_INPUT_BUF
 			} else { //in_idx == 1
-				//MxN -> N -> out_shape
-				//in_out_grad(m,n1,n2) = 0 if n1 != n2 else other_input_buf(m)
-				//in_outn_grad = in_out_grad * out_outn_grad
-				//in_outn_grad(m,n1, a) = sum(n2) in_out_grad(m,n1,n2) * out_outn_grad(n2, a)
-				//          = other_input_buf(m) * out_outn_grad(n1, a)
-#define IN_OUTN_GRAD(n, a) in_outn_grad_buf[n *out_size + a]
-#define OUT_OUTN_GRAD(m, a) out_outn_grad_buf[m *out_size + a]
-#define OTHER_INPUT_BUF(m,n) other_input_buf[m *N + n]
-				for (uint64_t m = 0; m < M; ++m) {
-					for (uint64_t n = 0; n < N; ++n) {
-						for (uint64_t a = 0; a < out_size; ++a) {
-							IN_OUTN_GRAD(n, a) += OUT_OUTN_GRAD(m, a) * OTHER_INPUT_BUF(m,n);
-						}
-					}
+				for (uint64_t a = 0; a < out_size; ++a) {
+					_cpu_vecmatmul(out_outn_grad_buf + a, other_input_buf, in_outn_grad_buf + a,
+							M, N);
 				}
-#undef IN_OUTN_GRAD
-#undef OUT_OUTN_GRAD
-#undef OTHER_INPUT_BUF
 			}
 		}
 	};

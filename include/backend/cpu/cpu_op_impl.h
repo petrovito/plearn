@@ -13,14 +13,15 @@
 
 namespace plearn::backend::cpu {
 
-	inline void _cpu_matmul(float* A, float* B,
-			float* C, uint64_t m, uint64_t n, uint64_t k) {
+	inline void _cpu_matmul(float* A, float* B, float* C, 
+			uint64_t m, uint64_t n, uint64_t k, 
+			bool add = false) {
 #if USE_OPENBLAS
 		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-				m, n, k, 
+				m, k, n, 
 				1.0f, A, n, 
 				B, k, 
-				0.0f, C, k);
+				add ? 1.0f : 0.0f, C, k);
 #else
 		for (uint64_t i = 0; i < m; ++i) {
 			for (uint64_t l = 0; l < n; ++l) {
