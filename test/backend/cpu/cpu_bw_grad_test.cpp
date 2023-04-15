@@ -4,6 +4,7 @@
 #include "environ/env_types.h"
 #include "environ/exec_env.h"
 #include "rep/rep_types.h"
+#include <cstdint>
 #include <gtest/gtest.h>
 
 #include <backend/cpu/cpu_bw_grad.h>
@@ -11,9 +12,9 @@
 
 namespace plearn::backend::cpu {
 
-static const int dim1 = 256;
-static const int dim2 = 128;
-static const int SIZE = dim1*dim2;
+static const uint64_t dim1 = 256;
+static const uint64_t dim2 = 128;
+static const uint64_t SIZE = dim1*dim2;
 
 static cpu_backend backend;
 static exec_env env(&backend);
@@ -49,13 +50,13 @@ TEST(CpuBwGrad, VecMatmul) {
 	bw.reset(inputs, ten_c);
 
 	bw.update_grad(0, out_grad, in1_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in1_grad_buf[i], 2*3*dim2);
 	}
 
 	bw.update_grad(1, out_grad, in2_grad);
-	for (int i = 0; i < dim1; i++) {
-		for (int j = 0; j < dim2; j++) {
+	for (uint64_t i = 0; i < dim1; i++) {
+		for (uint64_t j = 0; j < dim2; j++) {
 			EXPECT_EQ(in2_grad_buf[i*dim2+j], 1*3);
 		}
 	}
@@ -92,14 +93,14 @@ TEST(CpuBwGrad, MatVecMul) {
 	bw.reset(inputs, ten_c);
 
 	bw.update_grad(0, out_grad, in1_grad);
-	for (int i = 0; i < dim1; i++) {
-		for (int j = 0; j < dim2; j++) {
+	for (uint64_t i = 0; i < dim1; i++) {
+		for (uint64_t j = 0; j < dim2; j++) {
 			EXPECT_EQ(in1_grad_buf[i*dim2+j], 2*3);
 		}
 	}
 
 	bw.update_grad(1, out_grad, in2_grad);
-	for (int i = 0; i < dim2; i++) {
+	for (uint64_t i = 0; i < dim2; i++) {
 		EXPECT_EQ(in2_grad_buf[i], 1*3*dim1);
 	}
 }
@@ -129,7 +130,7 @@ TEST(CpuBwGrad, Square) {
 	bw.reset(inputs, ten_b);
 
 	bw.update_grad(0, out_grad, in_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in_grad_buf[i], 2*3);
 	}
 }
@@ -165,12 +166,12 @@ TEST(CpuBwGrad, Add) {
 	bw.reset(inputs, ten_c);
 
 	bw.update_grad(0, out_grad, in1_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in1_grad_buf[i], 3);
 	}
 
 	bw.update_grad(1, out_grad, in2_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in2_grad_buf[i], 3);
 	}
 }
@@ -206,12 +207,12 @@ TEST(CpuBwGrad, Sub) {
 	bw.reset(inputs, ten_c);
 
 	bw.update_grad(0, out_grad, in1_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in1_grad_buf[i], 3);
 	}
 
 	bw.update_grad(1, out_grad, in2_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in2_grad_buf[i], -3);
 	}
 }
@@ -247,12 +248,12 @@ TEST(CpuBwGrad, Mult) {
 	bw.reset(inputs, ten_c);
 
 	bw.update_grad(0, out_grad, in1_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in1_grad_buf[i], 3*2);
 	}
 
 	bw.update_grad(1, out_grad, in2_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in2_grad_buf[i], 3*1);
 	}
 }
@@ -288,12 +289,12 @@ TEST(CpuBwGrad, DotProduct) {
 	bw.reset(inputs, ten_c);
 
 	bw.update_grad(0, out_grad, in1_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in1_grad_buf[i], 3*2);
 	}
 
 	bw.update_grad(1, out_grad, in2_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in2_grad_buf[i], 3*1);
 	}
 }
@@ -307,7 +308,7 @@ TEST(CpuBwGrad, ReduceSum) {
 	std::fill_n(a, SIZE, 1.f);
 	std::fill_n(b, dim1, 0.f);
 
-	_cpu_reduce_sum(a, b, dim1, {dim1, dim2});
+	_cpu_reduce_sum(a, b, 1, {dim1, dim2});
 
 	gradient in1_grad = gradient{shape_t{dim1,dim2}, shape_t{1}, backend.create_tensor(shape_t{dim1, dim2, 1})};
 	gradient out_grad = gradient{shape_t{dim1}, shape_t{1}, backend.create_tensor(shape_t{dim1, 1})};
@@ -323,7 +324,7 @@ TEST(CpuBwGrad, ReduceSum) {
 	bw.reset(inputs, ten_b);
 
 	bw.update_grad(0, out_grad, in1_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in1_grad_buf[i], 3);
 	}
 }
@@ -337,7 +338,7 @@ TEST(CpuBwGrad, ReduceMean) {
 	std::fill_n(a, SIZE, 1.f);
 	std::fill_n(b, dim1, 0.f);
 
-	_cpu_reduce_mean(a, b, dim1, {dim1, dim2});
+	_cpu_reduce_mean(a, b, 1, {dim1, dim2});
 
 	gradient in1_grad = gradient{shape_t{dim1, dim2}, shape_t{1}, backend.create_tensor(shape_t{dim1, dim2, 1})};
 	gradient out_grad = gradient{shape_t{dim1}, shape_t{1}, backend.create_tensor(shape_t{dim1, 1})};
@@ -353,7 +354,7 @@ TEST(CpuBwGrad, ReduceMean) {
 	bw.reset(inputs, ten_b);
 
 	bw.update_grad(0, out_grad, in1_grad);
-	for (int i = 0; i < dim1; i++) {
+	for (uint64_t i = 0; i < dim1; i++) {
 		EXPECT_EQ(in1_grad_buf[i], 3.f/dim2);
 	}
 

@@ -1,13 +1,27 @@
 #pragma once
 
+#ifndef USE_OPENBLAS
+#define USE_OPENBLAS 1
+#endif
+
 #include <cstdint>
 #include <vector>
 
+#if USE_OPENBLAS
+#include <cblas.h>
+#endif
+
 namespace plearn::backend::cpu {
-	
+
 	inline void _cpu_matmul(float* A, float* B,
 			float* C, uint64_t m, uint64_t n, uint64_t k) {
-		
+#if USE_OPENBLAS
+		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+				m, n, k, 
+				1.0f, A, n, 
+				B, k, 
+				0.0f, C, k);
+#else
 		for (uint64_t i = 0; i < m; ++i) {
 			for (uint64_t l = 0; l < n; ++l) {
 				for (uint64_t j = 0; j < k; ++j) {
@@ -15,32 +29,51 @@ namespace plearn::backend::cpu {
 				}
 			}
 		}
+#endif
 	}
 
-
+	
 	inline void _cpu_vecmatmul(float* A, float*B, float* C, uint64_t m, uint64_t n) {
-		for (uint64_t i = 0; i < m; ++i) {
-			for (uint64_t j = 0; j < n; ++j) {
-				C[j] += A[i] * B[i*n + j];
+	#if USE_OPENBLAS
+			cblas_sgemv(CblasRowMajor, CblasTrans, 
+					m, n, 
+					1.0f, B, n, 
+					A, 1, 
+					0.0f, C, 1);
+	#else
+			for (uint64_t i = 0; i < m; ++i) {
+				for (uint64_t j = 0; j < n; ++j) {
+					C[j] += A[i] * B[i*n + j];
+				}
 			}
-		}
+	#endif
 	}
-
-	inline void _cpu_matvecmul(float* A, float*B, float* C, uint64_t m, uint64_t n) {
-		for (uint64_t i = 0; i < m; ++i) {
-			for (uint64_t l = 0; l < n; ++l) {
-				C[i] += A[i*n +l] * B[l];
-			}
-		}
+	
+	inline void _cpu_matvecmul(float* A, float* B, float* C, uint64_t m, uint64_t n) {
+	#if USE_OPENBLAS
+	        cblas_sgemv(CblasRowMajor, CblasNoTrans, 
+					m, n, 
+					1.0f, A, n, 
+					B, 1,
+					0.0f, C, 1);
+	#else
+	        for (uint64_t i = 0; i < m; ++i) {
+	            for (uint64_t l = 0; l < n; ++l) {
+	                C[i] += A[i*n +l] * B[l];
+	            }
+	        }
+	#endif
 	}
 
 	inline void _cpu_add(float* A, float* B, float* C, uint64_t len) {
+		//TODO BLAS
 		for (uint64_t i = 0; i < len; i++) {
 			C[i] = A[i] + B[i];
 		}
 	}
 
 	inline void _cpu_sub(float* A, float* B, float* C, uint64_t len) {
+		//TODO BLAS
 		for (uint64_t i = 0; i < len; i++) {
 			C[i] = A[i] - B[i];
 		}
@@ -64,7 +97,8 @@ namespace plearn::backend::cpu {
 		}
 	}
 
-	inline void _cpu_reduce_sum(float* A, float* C, unsigned axis, std::vector<uint64_t> shape) {
+	inline void _cpu_reduce_sum(float* A, float* C, unsigned axis, 
+			const std::vector<uint64_t>& shape) {
 		uint64_t m = 1;
 		uint64_t n = 1;
 		for (unsigned i = 0; i < axis; i++) {
@@ -83,7 +117,8 @@ namespace plearn::backend::cpu {
 		}
 	}
 
-	inline void _cpu_reduce_mean(float* A, float* C, unsigned axis, std::vector<uint64_t> shape) {
+	inline void _cpu_reduce_mean(float* A, float* C, unsigned axis,
+			const std::vector<uint64_t>& shape) {
 		uint64_t m = 1;
 		uint64_t n = 1;
 		for (unsigned i = 0; i < axis; i++) {
@@ -101,5 +136,5 @@ namespace plearn::backend::cpu {
 			}
 		}
 	}
-}
 
+}
