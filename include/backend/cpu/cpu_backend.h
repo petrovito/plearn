@@ -111,8 +111,9 @@ namespace plearn::backend::cpu {
 				switch (op.type_) {
 					case op_type::noop:
 					case op_type::identity: //TODO
-					case op_type::matmul:
 						break;
+					case op_type::matmul:
+						return std::make_unique<cpu_bw_matmul>();
 					case op_type::vecmatmul:
 						return std::make_unique<cpu_bw_vecmatmul>();
 					case op_type::matvecmul:

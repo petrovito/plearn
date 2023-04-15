@@ -14,7 +14,11 @@ namespace plearn::backend::cpu {
 
 static const uint64_t dim1 = 256;
 static const uint64_t dim2 = 128;
+static const uint64_t dim3 = 64;
 static const uint64_t SIZE = dim1*dim2;
+static const uint64_t SIZE1 = dim1*dim2;
+static const uint64_t SIZE2 = dim2*dim3;
+static const uint64_t SIZE3 = dim1*dim3;
 
 static cpu_backend backend;
 static exec_env env(&backend);
@@ -61,7 +65,6 @@ TEST(CpuBwGrad, VecMatmul) {
 		}
 	}
 }
-
 TEST(CpuBwGrad, MatVecMul) {
 	tensor_p ten_a = env.create_tensor(shape_t{dim1, dim2});
 	tensor_p ten_b = env.create_tensor(shape_t{dim2});
@@ -102,6 +105,51 @@ TEST(CpuBwGrad, MatVecMul) {
 	bw.update_grad(1, out_grad, in2_grad);
 	for (uint64_t i = 0; i < dim2; i++) {
 		EXPECT_EQ(in2_grad_buf[i], 1*3*dim1);
+	}
+}
+
+TEST(CpuBwGrad, MatMul) {
+	tensor_p ten_a = env.create_tensor(shape_t{dim1, dim2});
+	tensor_p ten_b = env.create_tensor(shape_t{dim2, dim3});
+	tensor_p ten_c = env.create_tensor(shape_t{dim1, dim3});
+
+	auto a = ((cpu_tensor*)ten_a->back())->get_content()->buf;
+	auto b = ((cpu_tensor*)ten_b->back())->get_content()->buf;
+	auto c = ((cpu_tensor*)ten_c->back())->get_content()->buf;
+	std::fill_n(a, SIZE1, 1.f);
+	std::fill_n(b, SIZE2, 2.f);
+	std::fill_n(c, SIZE3, 0.f);
+
+	_cpu_matmul(a, b, c, dim1, dim2, dim3);
+
+	gradient in1_grad = gradient{shape_t{dim1, dim2}, shape_t{1}, backend.create_tensor(shape_t{dim1, dim2, 1})};
+	gradient in2_grad = gradient{shape_t{dim2, dim3}, shape_t{1}, backend.create_tensor(shape_t{dim2, dim3, 1})};
+	gradient out_grad = gradient{shape_t{dim1, dim3}, shape_t{1}, backend.create_tensor(shape_t{dim1, dim3, 1})};
+
+	auto in1_grad_buf = ((cpu_tensor*)in1_grad.back_.get())->get_content()->buf;
+	auto in2_grad_buf = ((cpu_tensor*)in2_grad.back_.get())->get_content()->buf;
+	auto out_grad_buf = ((cpu_tensor*)out_grad.back_.get())->get_content()->buf;
+
+	std::fill_n(in1_grad_buf, SIZE1, 0.f);
+	std::fill_n(in2_grad_buf, SIZE2, 0.f);
+	std::fill_n(out_grad_buf, SIZE3, 3.f);
+
+	cpu_bw_matmul bw;
+	vector<tensor_p> inputs = {ten_a, ten_b};
+	bw.reset(inputs, ten_c);
+
+	bw.update_grad(0, out_grad, in1_grad);
+	for (uint64_t i = 0; i < dim1; i++) {
+		for (uint64_t j = 0; j < dim2; j++) {
+			EXPECT_EQ(in1_grad_buf[i*dim2+j], 2*3*dim3);
+		}
+	}
+
+	bw.update_grad(1, out_grad, in2_grad);
+	for (uint64_t i = 0; i < dim2; i++) {
+		for (uint64_t j = 0; j < dim3; j++) {
+			EXPECT_EQ(in2_grad_buf[i*dim3+j], 1*3*dim1);
+		}
 	}
 }
 

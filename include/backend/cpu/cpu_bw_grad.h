@@ -61,6 +61,33 @@ namespace plearn::backend::cpu {
 		}
 	};
 
+	class cpu_bw_matmul : public bw_op_diff_backend_t {
+		public:
+		void update_grad(unsigned in_idx,
+				const gradient& out_outn_grad, gradient& in_outn_grad) override {
+			auto out_outn_grad_buf = ((cpu_tensor*)out_outn_grad.back_.get())->get_content()->buf;
+			auto in_outn_grad_buf = ((cpu_tensor*)in_outn_grad.back_.get())->get_content()->buf;
+			auto other_input_ten = inputs_->at(1-in_idx);
+			auto other_input_buf = ((cpu_tensor*)other_input_ten->back())->get_content()->buf;
+
+			auto M = inputs_->at(0)->shape().dims[0];
+			auto N = inputs_->at(0)->shape().dims[1];
+			auto K = inputs_->at(1)->shape().dims[1];
+			const auto out_size = out_outn_grad.out_shape.size();
+			if (in_idx == 0) {
+				for (uint64_t a = 0; a < out_size; ++a) {
+					_cpu_matmul(out_outn_grad_buf + a, other_input_buf, in_outn_grad_buf + a,
+							M, K, N, true, false, true);
+				}
+			} else { //in_idx == 1
+				for (uint64_t a = 0; a < out_size; ++a) {
+					_cpu_matmul(other_input_buf, out_outn_grad_buf + a, in_outn_grad_buf + a,
+							N, M, K, true, true, false);
+				}
+			}
+		}
+	};
+
 	class cpu_bw_square : public bw_op_diff_backend_t {
 		public:
 		void update_grad(unsigned, 

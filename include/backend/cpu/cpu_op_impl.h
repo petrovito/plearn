@@ -15,13 +15,17 @@ namespace plearn::backend::cpu {
 
 	inline void _cpu_matmul(float* A, float* B, float* C, 
 			uint64_t m, uint64_t n, uint64_t k, 
-			bool add = false) {
+			bool add = false, bool transpose_A = false, bool transpose_B = false) {
 #if USE_OPENBLAS
-		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+		cblas_sgemm(CblasRowMajor, 
+				transpose_A? CblasTrans : CblasNoTrans,
+				transpose_B? CblasTrans : CblasNoTrans,
 				m, k, n, 
-				1.0f, A, n, 
-				B, k, 
-				add ? 1.0f : 0.0f, C, k);
+				1.0f, 
+				A, transpose_A ? m : n, 
+				B, transpose_B ? n : k, 
+				add ? 1.0f : 0.0f, 
+				C, k);
 #else
 		for (uint64_t i = 0; i < m; ++i) {
 			for (uint64_t l = 0; l < n; ++l) {
@@ -67,14 +71,12 @@ namespace plearn::backend::cpu {
 	}
 
 	inline void _cpu_add(float* A, float* B, float* C, uint64_t len) {
-		//TODO BLAS
 		for (uint64_t i = 0; i < len; i++) {
 			C[i] = A[i] + B[i];
 		}
 	}
 
 	inline void _cpu_sub(float* A, float* B, float* C, uint64_t len) {
-		//TODO BLAS
 		for (uint64_t i = 0; i < len; i++) {
 			C[i] = A[i] - B[i];
 		}
