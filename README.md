@@ -4,6 +4,7 @@ Plearn is an *algorithmic differentiation* library. It was created as a personal
 
 ## Example code 
 
+```c++
 	// create model  with:
 	//    * 1 input of shape {3}
 	//    * 1 variable of shape {3}
@@ -37,4 +38,4 @@ Plearn is an *algorithmic differentiation* library. It was created as a personal
 	ASSERT_EQ(out_diffs[0], -2);
 	ASSERT_EQ(out_diffs[1], -4);
 	ASSERT_EQ(out_diffs[2], -6);
-
+```
